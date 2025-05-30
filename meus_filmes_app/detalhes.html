@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalhes | Minha Coleção</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="bg-blur" id="bgBlur"></div>
+
+  <div class="app-window detalhes-page">
+
+    <!-- H E R O -->
+    <div class="detalhes-hero">
+      <aside class="poster-col"><img id="itemImagem" src="" alt="Capa do item"></aside>
+      <div class="right-col">
+        <!-- Header -->
+        <div class="hero-header"><button id="btnVoltarLista" class="back-button">← Voltar</button>
+          <h1 id="itemName" class="title"></h1>
+        </div>
+        <!-- Actions -->
+        <div class="action-buttons"><button id="btnEditarItem" class="btn btn-primary">✎ Editar</button><button
+            id="btnEliminarItem" class="btn">🗑</button><a id="btnTrailer" class="btn" href="#" target="_blank"
+            style="display:none">🎬 Trailer</a></div>
+        <!-- Tags -->
+        <div class="tags"><span id="itemTipo" class="tag"></span><span id="itemIdioma" class="tag"></span><span
+            id="itemGenero" class="tag"></span><span id="itemAnoLancamento" class="tag"></span></div>
+        <!-- Rating -->
+        <div class="rating">
+          <span class="score-value" id="itemScoreFinal">
+          </span>
+          <span class="score-value" id="itemScoreFinal">
+          </span>
+          <span id="rankBadge" class="rank-badge">
+          </span>
+        </div>
+
+        <!-- Storyline & review -->
+        <section>
+          <h2 class="subtitulo">Storyline</h2>
+          <p id="itemSinopse" class="sinopse-text"></p>
+        </section>
+        <section>
+          <h2 class="subtitulo">Review</h2>
+          <p id="itemReview" class="sinopse-text"></p>
+        </section>
+        <!-- Detalhes -->
+        <section class="details-grid">
+          <div><strong>Score:</strong><span id="itemScoreFinalMeta"></span></div>
+          <div><strong>Ano:</strong><span id="itemAnoLancamentoMeta"></span></div>
+          <div><strong>Géneros:</strong><span id="itemGeneroMeta"></span></div>
+        </section>
+        <!-- Classificações -->
+        <section class="classificacoes-section">
+          <h2 class="subtitulo">Classificações</h2>
+          <div class="grid-classificacoes">
+            <div><strong>História & Enredo:</strong><span id="classHistoriaEnredo"></span></div>
+            <div><strong>Roteiro / Diálogos:</strong><span id="classRoteiroDialogos"></span></div>
+            <div><strong>Construção de Mundo:</strong><span id="classConstrucaoMundo"></span></div>
+            <div><strong>Personagens:</strong><span id="classDesenvolvimentoPersonagens"></span></div>
+            <div><strong>Música:</strong><span id="classMusica"></span></div>
+            <div><strong>Efeitos Sonoros:</strong><span id="classEfeitosSonoros"></span></div>
+            <div><strong>Artes Visuais:</strong><span id="classArtesVisuais"></span></div>
+            <div><strong>Impacto Emocional:</strong><span id="classImpactoEmocional"></span></div>
+            <div><strong>Originalidade:</strong><span id="classOriginalidade"></span></div>
+            <div><strong>Ritmo:</strong><span id="classRitmo"></span></div>
+            <div><strong>Humor:</strong><span id="classHumor"></span></div>
+            <div><strong>Adaptação/Remake:</strong><span id="classAdaptacaoRemake"></span></div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- R E L A C I O N A D O S -->
+    <section class="recomendados-box" id="relacionadosSection" style="display:none">
+      <h2 class="subtitulo">Recomendados</h2>
+      <div class="recomendados-grid" id="relacionadosGrid"></div>
+    </section>
+  </div>
+
+  <script src="js/dataManager.js"></script>
+  <script src="js/uiUtils.js"></script>
+  <script src="js/detailsHandler.js"></script>
+
+
+</body>
+
+</html>

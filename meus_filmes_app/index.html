@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minha Coleção de Filmes, Séries e Animes</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <div class="app-window">
+        <header>
+            <h1>Minha Coleção</h1>
+            <div class="actions-main">
+                <button id="btnAdicionarNovo">Adicionar Novo Item</button>
+            </div>
+        </header>
+
+        <!-- Filtro por Tabs -->
+        <nav class="filtros-tabs">
+            <button class="tab-button active" data-filter="all">Todos</button>
+            <button class="tab-button" data-filter="Filme">Filmes</button>
+            <button class="tab-button" data-filter="Série">Séries</button>
+        </nav>
+
+        <main>
+            <section class="top5">
+                <h2>Top 5</h2>
+                <div class="top5-cards" id="top5Cards">
+                  <!-- Cards inseridos por JS -->
+                </div>
+            </section>
+
+            <section class="colecao-grid" id="colecaoGrid">
+                <!-- Itens da coleção serão inseridos aqui pelo JavaScript -->
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2023 Classificador Pessoal</p>
+        </footer>
+
+        <script src="./js/dataManager.js"></script>
+        <script src="./js/uiUtils.js"></script>
+        <script src="./js/main.js"></script>
+    </div>
+</body>
+</html>

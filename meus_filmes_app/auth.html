@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / Registo - Rate It Plus</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: var(--bg-gradient); /* Do teu style.css */
+        }
+
+        .auth-container {
+            background: var(--card-bg); /* Do teu style.css */
+            padding: 2rem 2.5rem;
+            border-radius: var(--radius); /* Do teu style.css */
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .auth-container h1 {
+            color: var(--accent2); /* Do teu style.css */
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .auth-form .form-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+
+        .auth-form label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: var(--text-light); /* Do teu style.css */
+            font-size: 0.9rem;
+        }
+
+        .auth-form input[type="text"],
+        .auth-form input[type="password"] {
+            width: 100%;
+            padding: 0.7rem 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: var(--radius); /* Do teu style.css */
+            background: var(--card-glass); /* Do teu style.css */
+            color: var(--text-light); /* Do teu style.css */
+            font-size: 1rem;
+        }
+
+        .auth-form .btn-auth {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: var(--radius); /* Do teu style.css */
+            background: var(--accent); /* Do teu style.css */
+            color: #000;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background var(--transition); /* Do teu style.css */
+            margin-top: 0.5rem;
+        }
+
+        .auth-form .btn-auth:hover {
+            background: var(--accent2); /* Do teu style.css */
+        }
+
+        .auth-toggle {
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .auth-toggle a {
+            color: var(--accent); /* Do teu style.css */
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-toggle a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            background-color: rgba(255, 64, 129, 0.2); /* Cor --accent2 com transparência */
+            color: var(--accent2);
+            padding: 0.75rem;
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            border: 1px solid var(--accent2);
+            display: none; /* Escondido por defeito */
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <h1 id="authTitle">Login</h1>
+        <div id="errorMessage" class="error-message"></div> <form id="authForm" class="auth-form">
+            <div class="form-group">
+                <label for="username">Nome de Utilizador</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Palavra-passe</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group" id="confirmPasswordGroup" style="display: none;">
+                <label for="confirmPassword">Confirmar Palavra-passe</label>
+                <input type="password" id="confirmPassword" name="confirmPassword">
+            </div>
+
+            <button type="submit" class="btn-auth" id="authButton">Entrar</button>
+        </form>
+
+        <div class="auth-toggle">
+            <p id="toggleText">Não tens conta? <a href="#" id="toggleLink">Regista-te aqui</a></p>
+        </div>
+        <div class="auth-toggle" style="margin-top: 0.5rem;">
+             <a href="index.html">← Voltar à Página Principal</a>
+        </div>
+    </div>
+
+    <script src="js/authHandler.js"></script> 
+    </body>
+</html>
