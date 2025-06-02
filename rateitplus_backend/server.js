@@ -6,6 +6,7 @@ const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); // Para gerar tokens
+const fetch = require('node-fetch');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -13,6 +14,9 @@ const port = process.env.PORT || 3001;
 // Chave secreta para JWT - NUMA APLICAÇÃO REAL, ISTO DEVE ESTAR NUM FICHEIRO .ENV E SER MAIS COMPLEXO
 const JWT_SECRET = process.env.JWT_SECRET || 'aTuaChaveSuperSecretaParaRateItPlus';
 
+// TMDB Configuration
+const TMDB_API_KEY = process.env.TMDB_API_KEY;
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
 app.use(cors());
 app.use(express.json());
@@ -510,6 +514,59 @@ app.delete('/api/colecao/:id', verificarToken, async (req, res) => {
     }
 });
 
+// --- Rotas Proxy TMDB ---
+
+app.get('/api/tmdb/search/:type/:query', verificarToken, async (req, res) => {
+    const { type, query } = req.params;
+    const { lang = 'pt-PT', page = 1 } = req.query; // Default language and page
+
+    if (!TMDB_API_KEY) {
+        console.error('TMDB_API_KEY is not configured on the server.');
+        return res.status(500).json({ message: 'TMDB API key not configured on server.' });
+    }
+
+    const url = `${TMDB_BASE_URL}/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}&language=${lang}&page=${page}&include_adult=false`;
+
+    try {
+        const tmdbResponse = await fetch(url);
+        if (!tmdbResponse.ok) {
+            const errorBody = await tmdbResponse.text();
+            console.error(`TMDB API error for search "${query}" (type: ${type}): ${tmdbResponse.status}`, errorBody);
+            return res.status(tmdbResponse.status).json({ message: `Error from TMDB: ${tmdbResponse.statusText}` });
+        }
+        const data = await tmdbResponse.json();
+        res.json(data);
+    } catch (error) {
+        console.error(`Failed to fetch from TMDB for search "${query}" (type: ${type}):`, error);
+        res.status(500).json({ message: 'Failed to fetch data from TMDB.' });
+    }
+});
+
+app.get('/api/tmdb/details/:type/:itemId', verificarToken, async (req, res) => {
+    const { type, itemId } = req.params;
+    const { lang = 'pt-PT', append_to_response = 'credits,videos,images' } = req.query;
+
+    if (!TMDB_API_KEY) {
+        console.error('TMDB_API_KEY is not configured on the server.');
+        return res.status(500).json({ message: 'TMDB API key not configured on server.' });
+    }
+
+    const url = `${TMDB_BASE_URL}/${type}/${itemId}?api_key=${TMDB_API_KEY}&language=${lang}&append_to_response=${append_to_response}`;
+
+    try {
+        const tmdbResponse = await fetch(url);
+        if (!tmdbResponse.ok) {
+            const errorBody = await tmdbResponse.text();
+            console.error(`TMDB API error for details (type: ${type}, id: ${itemId}): ${tmdbResponse.status}`, errorBody);
+            return res.status(tmdbResponse.status).json({ message: `Error from TMDB: ${tmdbResponse.statusText}` });
+        }
+        const data = await tmdbResponse.json();
+        res.json(data);
+    } catch (error) {
+        console.error(`Failed to fetch from TMDB for details (type: ${type}, id: ${itemId}):`, error);
+        res.status(500).json({ message: 'Failed to fetch data from TMDB.' });
+    }
+});
 
 async function startServer() {
     const db = await initializeDbConnection();

@@ -2,8 +2,6 @@
 
 const BACKEND_URL = 'http://localhost:3000/api';
 
-// ... (PESOS_PADRAO, gerarUniqueId, calcularScoreFinal como antes) ...
-const PESOS_PADRAO = { /* ... */ };
 function gerarUniqueId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
