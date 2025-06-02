@@ -120,17 +120,17 @@ header h1 {
 
 .top5-cards:hover .card-principal {
   flex: 1;
-} 
+}
 
 .top5-cards .card-principal:hover,
 .top5-cards .card-menor:hover {
   flex: 1.3;
-} 
+}
 
 .top5-cards:hover .card-principal:not(:hover),
 .top5-cards:hover .card-menor:not(:hover) {
   flex: 1;
-} 
+}
 
 /* Aspect Ratio for Covers */
 .card-principal img,
@@ -622,3 +622,418 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
+/* Estilos Auth Page */
+/* Define o corpo da página de autenticação para centralizar o conteúdo */
+/* O body já está definido globalmente, mas auth.html tinha um body específico.
+   Este estilo assegura que, especificamente para páginas que usem .auth-container,
+   o conteúdo seja flexível e centralizado. Idealmente, a página auth.html
+   não deveria ter sua própria tag body, mas sim integrar-se ao body principal.
+   No entanto, mantendo a estrutura de auth.html, este estilo é aplicado. */
+.auth-page-body { /* Aplicar esta classe ao body da auth.html se necessário, ou garantir que o body global não conflite */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh; /* Altura mínima para ocupar toda a tela */
+    background: var(--bg-gradient); /* Usa o gradiente de fundo definido nas variáveis globais */
+}
+
+/* Container principal da autenticação */
+.auth-container {
+    background: var(--card-bg); /* Fundo do cartão (com transparência) das variáveis globais */
+    padding: 2rem 2.5rem; /* Preenchimento interno */
+    border-radius: var(--radius); /* Bordas arredondadas das variáveis globais */
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6); /* Sombra para dar profundidade */
+    backdrop-filter: blur(6px); /* Efeito de vidro fosco no fundo */
+    width: 100%; /* Largura total */
+    max-width: 450px; /* Largura máxima do container */
+    text-align: center; /* Alinhamento do texto ao centro */
+}
+
+/* Título dentro do container de autenticação (ex: "Login", "Registo") */
+.auth-container h1 {
+    color: var(--accent2); /* Cor de destaque 2 das variáveis globais */
+    margin-bottom: 1.5rem; /* Margem inferior */
+    font-size: 1.8rem; /* Tamanho da fonte */
+}
+
+/* Grupo de formulário (label + input) */
+.auth-form .form-group {
+    margin-bottom: 1.2rem; /* Margem inferior */
+    text-align: left; /* Alinhamento do texto à esquerda */
+}
+
+/* Labels dos campos do formulário */
+.auth-form label {
+    display: block; /* Faz o label ocupar toda a largura */
+    margin-bottom: 0.4rem; /* Margem inferior */
+    color: var(--text-light); /* Cor clara do texto das variáveis globais */
+    font-size: 0.9rem; /* Tamanho da fonte */
+}
+
+/* Campos de texto e senha */
+.auth-form input[type="text"],
+.auth-form input[type="password"] {
+    width: 100%; /* Largura total */
+    padding: 0.7rem 0.8rem; /* Preenchimento interno */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* Borda sutil */
+    border-radius: var(--radius); /* Bordas arredondadas */
+    background: var(--card-glass); /* Fundo com efeito de vidro das variáveis globais */
+    color: var(--text-light); /* Cor clara do texto */
+    font-size: 1rem; /* Tamanho da fonte */
+}
+
+/* Botão de submissão do formulário */
+.auth-form .btn-auth {
+    width: 100%; /* Largura total */
+    padding: 0.8rem; /* Preenchimento interno */
+    border: none; /* Sem borda */
+    border-radius: var(--radius); /* Bordas arredondadas */
+    background: var(--accent); /* Cor de destaque 1 das variáveis globais */
+    color: #000; /* Cor do texto (preto para contraste com o fundo accent) */
+    font-size: 1.1rem; /* Tamanho da fonte */
+    cursor: pointer; /* Cursor de ponteiro */
+    transition: background var(--transition); /* Transição suave para o hover do fundo */
+    margin-top: 0.5rem; /* Margem superior */
+}
+
+/* Efeito hover para o botão de submissão */
+.auth-form .btn-auth:hover {
+    background: var(--accent2); /* Muda para a cor de destaque 2 no hover */
+}
+
+/* Container para o link de alternar entre Login e Registo */
+.auth-toggle {
+    margin-top: 1.5rem; /* Margem inferior */
+    font-size: 0.9rem; /* Tamanho da fonte */
+}
+
+/* Link para alternar (ex: "Regista-te aqui") */
+.auth-toggle a {
+    color: var(--accent); /* Cor de destaque 1 */
+    text-decoration: none; /* Sem sublinhado */
+    font-weight: 600; /* Peso da fonte */
+}
+
+/* Efeito hover para o link de alternar */
+.auth-toggle a:hover {
+    text-decoration: underline; /* Adiciona sublinhado no hover */
+}
+
+/* Estilo para mensagens de erro */
+.error-message {
+    background-color: rgba(255, 64, 129, 0.2); /* Cor --accent2 com transparência */
+    color: var(--accent2); /* Cor do texto igual à cor de destaque 2 */
+    padding: 0.75rem; /* Preenchimento interno */
+    border-radius: var(--radius); /* Bordas arredondadas */
+    margin-bottom: 1rem; /* Margem inferior */
+    font-size: 0.9rem; /* Tamanho da fonte */
+    border: 1px solid var(--accent2); /* Borda com a cor de destaque 2 */
+    display: none; /* Escondido por defeito, mostrado via JavaScript */
+}
+/* Fim Estilos Auth Page */
+
+/* Estilos Formulário Page */
+/* Corpo da página do formulário - pode herdar estilos globais do body ou ter ajustes específicos se necessário.
+   A classe .form-page-body será adicionada ao body da formulario.html */
+.form-page-body {
+    /* O body global já é display:flex; align-items:center; justify-content:center;
+       Isso é bom para auth.html, mas para formulario.html, queremos que o .form-window
+       ocupe a largura e tenha margem automática, não que seja centralizado como um pequeno modal.
+       Portanto, aqui podemos querer redefinir alguns desses comportamentos para .form-page-body
+       ou garantir que .form-window tenha display:block e margin: auto para sobrescrever.
+       No entanto, o .form-window já tem margin: 3rem auto, o que deve funcionar bem.
+       Apenas garantimos que o body não force uma centralização indesejada. */
+    display: block; /* Sobrescreve o flex centralizado do body global */
+}
+
+/* Efeito de fundo desfocado (blur) para a página do formulário.
+   Reutiliza a classe .bg-blur já definida globalmente. */
+
+/* Janela principal do formulário */
+/* A classe .form-window já está definida em formulario.html, não precisa redefinir aqui
+   a menos que os estilos inline originais tivessem algo não coberto por .app-window ou similar.
+   Os estilos inline eram:
+    max-width:1440px;margin:3rem auto;background:var(--card-bg);padding:2.5rem 2rem;
+    border-radius:var(--radius);box-shadow:0 8px 32px rgba(0,0,0,.6);backdrop-filter:blur(8px);
+    display:flex;flex-direction:column;gap:1.8rem
+   Estes são bons e específicos para .form-window e não conflitam com .app-window.
+*/
+.form-window {
+    max-width: 1440px; /* Largura máxima */
+    margin: 3rem auto; /* Centraliza com margem superior/inferior */
+    background: var(--card-bg); /* Fundo do cartão (com transparência) */
+    padding: 2.5rem 2rem; /* Preenchimento interno */
+    border-radius: var(--radius); /* Bordas arredondadas */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .6); /* Sombra para profundidade */
+    backdrop-filter: blur(8px); /* Efeito de vidro fosco */
+    display: flex; /* Organiza o conteúdo em coluna */
+    flex-direction: column; /* Direção da organização */
+    gap: 1.8rem; /* Espaçamento entre elementos filhos diretos */
+}
+
+/* Cabeçalho do formulário (botão voltar e título) */
+.form-header {
+    display: flex;
+    flex-direction: column; /* Título abaixo do botão */
+    gap: .6rem; /* Espaço entre botão e título */
+    align-items: flex-start; /* Alinha itens à esquerda */
+}
+
+/* Botão de voltar - .back-button já está definido globalmente e é adequado. */
+
+/* Título do formulário */
+.form-header h1 {
+    font-size: 2rem; /* Tamanho da fonte */
+    margin: 0; /* Remove margem padrão */
+    color: var(--accent2); /* Cor de destaque 2 */
+}
+
+/* Secção de Pesquisa TMDB */
+.tmdb-search-section {
+    background: rgba(255, 255, 255, 0.05); /* Fundo levemente transparente */
+    padding: 1rem; /* Preenchimento interno */
+    border-radius: var(--radius); /* Bordas arredondadas */
+    margin-bottom: 1.5rem; /* Margem inferior */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Borda sutil */
+}
+
+.tmdb-search-section h2 {
+    margin-top: 0; /* Remove margem superior */
+    margin-bottom: 0.8rem; /* Margem inferior */
+    font-size: 1.2rem; /* Tamanho da fonte */
+    color: var(--accent); /* Cor de destaque 1 */
+}
+
+/* Controles da pesquisa TMDB (input, select, button) */
+.search-controls {
+    display: flex; /* Alinha controles na horizontal */
+    gap: 0.5rem; /* Espaço entre controles */
+    margin-bottom: 1rem; /* Margem inferior */
+}
+
+.search-controls input[type="text"] { /* Estilo para o campo de texto da pesquisa */
+    flex-grow: 1; /* Input de texto ocupa espaço disponível */
+    padding: 0.55rem 0.8rem; /* Preenchimento interno */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Borda sutil */
+    border-radius: var(--radius); /* Bordas arredondadas */
+    background: var(--card-glass); /* Fundo com efeito de vidro */
+    color: var(--text-light); /* Cor do texto */
+}
+.search-controls select { /* Estilo para o seletor de tipo (filme/série) */
+    padding: 0.55rem 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius);
+    background: var(--card-glass);
+    color: var(--text-light);
+    /* Adicione outros estilos se necessário, ex: aparência, cor da seta */
+}
+
+.search-controls button { /* Botão de pesquisa */
+    padding: 0.55rem 1rem; /* Preenchimento interno */
+    border: none; /* Sem borda */
+    border-radius: var(--radius); /* Bordas arredondadas */
+    background: var(--accent); /* Cor de destaque 1 */
+    color: #000; /* Cor do texto (preto para contraste) */
+    cursor: pointer; /* Cursor de ponteiro */
+    transition: background var(--transition); /* Transição suave no hover */
+}
+
+.search-controls button:hover {
+    background: var(--accent2); /* Muda para cor de destaque 2 no hover */
+}
+
+/* Área dos resultados da pesquisa TMDB */
+#tmdbSearchResults {
+    display: grid; /* Layout em grade */
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Colunas responsivas */
+    gap: 1rem; /* Espaçamento entre itens */
+    max-height: 400px; /* Altura máxima com scroll */
+    overflow-y: auto; /* Scroll vertical se necessário */
+    padding: 0.5rem; /* Preenchimento interno */
+    background: rgba(0,0,0,0.2); /* Fundo escuro para a área de resultados */
+    border-radius: calc(var(--radius) - 4px); /* Bordas arredondadas internas */
+}
+
+/* Item individual do resultado da pesquisa TMDB */
+.search-result-item {
+    background: var(--card-glass); /* Fundo com efeito de vidro */
+    border-radius: var(--radius); /* Bordas arredondadas */
+    padding: 0.5rem; /* Preenchimento interno */
+    text-align: center; /* Texto centralizado */
+    cursor: pointer; /* Cursor de ponteiro */
+    transition: background var(--transition); /* Transição suave no hover */
+    border: 1px solid transparent; /* Borda transparente por padrão */
+}
+
+.search-result-item:hover {
+    background: rgba(255, 255, 255, 0.1); /* Fundo mais claro no hover */
+    border-color: var(--accent); /* Borda com cor de destaque 1 no hover */
+}
+
+.search-result-item img { /* Imagem (poster) do item */
+    width: 100%; /* Imagem ocupa toda a largura do item */
+    aspect-ratio: 2/3; /* Proporção da imagem (poster) */
+    object-fit: cover; /* Ajuste da imagem dentro do espaço */
+    border-radius: calc(var(--radius) - 4px); /* Bordas arredondadas para a imagem */
+    margin-bottom: 0.5rem; /* Margem inferior */
+}
+
+.search-result-item span { /* Título do item no resultado */
+    font-size: 0.8rem; /* Tamanho da fonte para o título */
+    color: var(--text-light); /* Cor do texto */
+    display: -webkit-box; /* Para truncar texto em múltiplas linhas */
+    -webkit-line-clamp: 2; /* Número de linhas antes de truncar */
+    -webkit-box-orient: vertical; /* Orientação da caixa */
+    overflow: hidden; /* Esconde texto que transborda */
+    text-overflow: ellipsis; /* Adiciona "..." ao texto truncado */
+}
+.search-result-item .result-year { /* Ano do item no resultado */
+    font-size: 0.7rem; /* Tamanho da fonte para o ano */
+    color: var(--text-dark); /* Cor de texto mais escura para o ano */
+    display: block; /* Faz o ano ocupar uma nova linha */
+    margin-top: 0.2rem; /* Margem superior para o ano */
+}
+
+
+/* Grid principal do formulário de detalhes do item */
+.form-grid {
+    display: grid; /* Layout em grade */
+    grid-template-columns: 1fr 1fr; /* Duas colunas de tamanho igual */
+    gap: 1.2rem 2rem; /* Espaçamento entre linhas e colunas */
+}
+
+/* Legendas/Títulos dentro das secções do formulário (ex: "Detalhes do Item") */
+.form-grid legend {
+    grid-column: 1 / -1; /* Ocupa todas as colunas */
+    font-size: 1.1rem; /* Tamanho da fonte */
+    color: var(--accent2); /* Cor de destaque 2 */
+    margin-top: 1rem; /* Margem superior */
+    margin-bottom: 0.5rem; /* Margem inferior */
+    padding-bottom: 0.3rem; /* Preenchimento inferior */
+    border-bottom: 1px solid var(--accent2); /* Linha separadora inferior */
+}
+
+/* Labels dos campos do formulário */
+.form-grid label {
+    font-size: .9rem; /* Tamanho da fonte */
+    margin-bottom: .3rem; /* Margem inferior */
+    display: block; /* Label ocupa toda a largura */
+}
+
+/* Estilização geral para inputs, textareas e selects dentro do .form-grid */
+.form-grid input,
+.form-grid textarea,
+.form-grid select {
+    width: 100%; /* Largura total */
+    padding: .55rem .8rem; /* Preenchimento interno */
+    border: 1px solid rgba(255, 255, 255, .2); /* Borda sutil */
+    border-radius: var(--radius); /* Bordas arredondadas */
+    background: var(--card-glass); /* Fundo com efeito de vidro */
+    color: var(--text-light); /* Cor do texto */
+    resize: vertical; /* Permite redimensionamento vertical (para textareas) */
+}
+
+.form-grid textarea { /* Altura mínima específica para textareas */
+    min-height: 100px;
+}
+
+/* Lista de Chips (usado para Géneros e Relacionados) */
+.chip-list {
+    display: flex; /* Alinha chips na horizontal */
+    flex-wrap: wrap; /* Permite quebra de linha */
+    gap: .5rem; /* Espaçamento entre chips */
+}
+
+/* Chip individual */
+.chip {
+    background: var(--card-glass); /* Fundo com efeito de vidro */
+    border: 1px solid rgba(255, 255, 255, .2); /* Borda sutil */
+    padding: .35rem .9rem; /* Preenchimento interno */
+    border-radius: var(--radius); /* Bordas arredondadas */
+    cursor: pointer; /* Cursor de ponteiro */
+    font-size: .85rem; /* Tamanho da fonte */
+    user-select: none; /* Impede seleção de texto dentro do chip */
+    transition: background var(--transition); /* Transição suave no hover/seleção */
+}
+
+.chip.selected { /* Chip quando está selecionado/ativo */
+    background: var(--accent); /* Cor de destaque 1 */
+    color: #000; /* Cor do texto (preto para contraste) */
+}
+
+.chip .remove { /* Estilo para o 'x' de remover um chip */
+    margin-left: .4rem; /* Margem à esquerda */
+    cursor: pointer; /* Cursor de ponteiro */
+    font-weight: 600; /* Peso da fonte (negrito) */
+}
+
+/* Grid para os campos de classificações (notas de 0 a 10) */
+.grid-classificacoes {
+    grid-column: 1/-1; /* Ocupa todas as colunas do form-grid pai */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Colunas responsivas, mínimo 150px */
+    gap: 1rem; /* Espaçamento entre campos */
+}
+
+.grid-classificacoes div { /* Cada par de label/input dentro das classificações */
+    display: flex;
+    flex-direction: column; /* Label acima do input */
+}
+
+/* Secção de Ações do Formulário (botões Salvar, Limpar, Cancelar) */
+.form-actions {
+    display: flex; /* Alinha botões na horizontal */
+    justify-content: flex-end; /* Alinha botões à direita */
+    gap: 1rem; /* Espaçamento entre botões */
+    grid-column: 1/-1; /* Ocupa todas as colunas do form-grid pai, se dentro de um */
+    margin-top: 1rem; /* Margem superior para separar da última secção de inputs */
+}
+
+/* Botões .btn e .btn-primary já estão definidos globalmente e são adequados. */
+
+/* Controla a visibilidade das diferentes secções do formulário (TMDB, Detalhes, Avaliação, Ações) */
+.form-section {
+    display: none; /* Oculta todas as secções por padrão */
+    /* margin-bottom não é mais necessário aqui, o gap do .form-window cuida disso */
+}
+
+.form-section.active { /* Classe para mostrar a secção ativa (controlado por JavaScript) */
+    display: block;
+}
+
+/* Garante que a seção de pesquisa TMDB seja exibida se tiver .active */
+.tmdb-search-section.active {
+    display: block;
+}
+
+/* Container para o botão "Adicionar Manualmente" */
+#btnAdicionarManualmenteContainer {
+    margin-top: 1rem; /* Margem superior */
+    text-align: center; /* Alinhamento do conteúdo (parágrafo e botão) */
+    /* display: none; é o padrão via .form-section ou ausência de .active */
+}
+#btnAdicionarManualmenteContainer.active { /* Para mostrar quando necessário */
+    display: block;
+}
+
+/* Layout para o resumo do item selecionado do TMDB */
+.tmdb-summary-layout {
+    display: flex; /* Poster ao lado das informações */
+    align-items: flex-start; /* Alinha itens no topo */
+    gap: 1rem; /* Espaço entre poster e texto */
+    padding: 0.5rem; /* Preenchimento interno */
+    background: rgba(255, 255, 255, 0.03); /* Fundo sutil para o resumo */
+    border-radius: var(--radius); /* Bordas arredondadas */
+    border: 1px solid var(--card-glass); /* Borda com efeito de vidro */
+}
+
+/* Legenda para a secção de resumo do item TMDB */
+#tmdbItemSummarySection legend {
+    font-size: 1.1rem; /* Tamanho da fonte */
+    color: var(--accent); /* Cor de destaque 1 (para diferenciar de outras legendas) */
+    margin-bottom: 0.8rem; /* Margem inferior */
+    padding-bottom: 0.3rem; /* Preenchimento inferior */
+    border-bottom: 1px solid var(--accent); /* Linha separadora com cor de destaque 1 */
+}
+/* Fim Estilos Formulário Page */
