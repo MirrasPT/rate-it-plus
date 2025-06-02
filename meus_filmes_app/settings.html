@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações de Avaliação - Rate It Plus</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div id="branding">
+                <h1><a href="index.html">Rate It Plus</a></h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Minha Coleção</a></li>
+                    <li><a href="#" id="logout-button">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1>Configurações dos Critérios de Avaliação</h1>
+
+        <div id="fields-list-container">
+            <h2>Meus Critérios Atuais</h2>
+            <div id="fields-list">
+                <!-- Critérios serão carregados aqui por JavaScript -->
+                <p>Carregando seus critérios...</p>
+            </div>
+        </div>
+
+        <div id="add-field-container">
+            <h2>Adicionar Novo Critério</h2>
+            <form id="add-field-form">
+                <div>
+                    <label for="field_name">Nome do Critério:</label>
+                    <input type="text" id="field_name" name="field_name" required>
+                </div>
+                <div>
+                    <label for="weight">Peso (1-10):</label>
+                    <input type="number" id="weight" name="weight" min="1" max="10" required>
+                </div>
+                <button type="submit">Adicionar Critério</button>
+                <p id="add-field-error" class="error-message" style="display:none;"></p>
+            </form>
+        </div>
+         <hr>
+        <p><a href="index.html">Voltar para a Coleção</a></p>
+    </div>
+
+    <footer>
+        <p>Rate It Plus, Copyright &copy; 2024</p>
+    </footer>
+
+    <script src="js/settingsHandler.js"></script>
+</body>
+</html>

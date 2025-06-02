@@ -37,11 +37,38 @@ const PESOS_PADRAO = {
 };
 
 // Função para calcular score final
-function calcularScoreFinalBackend(classificacoes, pesos = PESOS_PADRAO) {
+async function calcularScoreFinalBackend(db, id_utilizador, classificacoes) {
   if (!classificacoes || typeof classificacoes !== 'object') {
     console.warn(" calcularScoreFinalBackend: 'classificacoes' em falta ou não é um objeto. Retornando 0.");
     return 0.00;
   }
+
+  let pesos = PESOS_PADRAO; // Default to global standard weights
+  try {
+    const userSettings = await db.all(
+      'SELECT field_name, weight FROM UserEvaluationSettings WHERE id_utilizador = ?',
+      [id_utilizador]
+    );
+
+    if (userSettings && userSettings.length > 0) {
+      const userPesos = {};
+      userSettings.forEach(setting => {
+        // Assuming field_name in DB matches keys in classificacoes (e.g., 'historiaEnredo')
+        // Or, ensure classificacoes keys are mapped to field_name if they differ.
+        userPesos[setting.field_name] = setting.weight;
+      });
+      if (Object.keys(userPesos).length > 0) {
+        pesos = userPesos;
+        // console.log(`[calcularScoreFinalBackend] Utilizando pesos personalizados para utilizador ${id_utilizador}:`, pesos);
+      } else {
+        // console.log(`[calcularScoreFinalBackend] Nenhum peso personalizado encontrado para utilizador ${id_utilizador}, utilizando PESOS_PADRAO.`);
+      }
+    }
+  } catch (error) {
+    console.error(`Erro ao buscar pesos personalizados para utilizador ${id_utilizador}:`, error);
+    // Fallback to PESOS_PADRAO in case of error
+  }
+
   let somaPonderada = 0;
   let somaPesos = 0;
 
@@ -55,6 +82,7 @@ function calcularScoreFinalBackend(classificacoes, pesos = PESOS_PADRAO) {
         somaPesos += peso;
       }
     } else if (criterio === 'adaptacaoRemake' && (notaRaw === null || notaRaw === '' || notaRaw === undefined)) {
+      // Se for adaptacaoRemake e não tiver nota, não contabiliza o peso
       continue;
     }
   }
@@ -149,6 +177,18 @@ async function initializeDatabase(db) {
         `);
         console.log("Tabela 'RelacionadosItem' (SQLite) verificada/criada com sucesso.");
 
+        // Tabela UserEvaluationSettings
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS UserEvaluationSettings (
+                id_setting INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_utilizador INTEGER NOT NULL,
+                field_name TEXT NOT NULL,
+                weight INTEGER NOT NULL,
+                FOREIGN KEY (id_utilizador) REFERENCES Utilizadores(id_utilizador) ON DELETE CASCADE,
+                UNIQUE (id_utilizador, field_name)
+            );
+        `);
+        console.log("Tabela 'UserEvaluationSettings' (SQLite) verificada/criada com sucesso.");
 
     } catch (error) {
         console.error("Erro ao inicializar as tabelas (SQLite):", error);
@@ -248,6 +288,104 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
+// --- Rotas da API UserEvaluationSettings ---
+
+// GET /api/settings/evaluation-fields - Fetches all settings for a user
+app.get('/api/settings/evaluation-fields', verificarToken, async (req, res) => {
+    const id_utilizador = req.utilizador.id_utilizador;
+    try {
+        const db = await dbPromise;
+        const settings = await db.all(
+            'SELECT field_name, weight FROM UserEvaluationSettings WHERE id_utilizador = ?',
+            [id_utilizador]
+        );
+        res.json(settings);
+    } catch (error) {
+        console.error('Erro ao obter UserEvaluationSettings:', error);
+        res.status(500).json({ message: 'Erro ao obter configurações de avaliação.' });
+    }
+});
+
+// POST /api/settings/evaluation-fields - Creates a new setting for a user
+app.post('/api/settings/evaluation-fields', verificarToken, async (req, res) => {
+    const id_utilizador = req.utilizador.id_utilizador;
+    const { field_name, weight } = req.body;
+
+    if (!field_name || field_name.trim() === '') {
+        return res.status(400).json({ message: 'O nome do campo (field_name) é obrigatório.' });
+    }
+    if (!Number.isInteger(weight) || weight < 1 || weight > 10) {
+        return res.status(400).json({ message: 'O peso (weight) deve ser um inteiro entre 1 e 10.' });
+    }
+
+    try {
+        const db = await dbPromise;
+        const result = await db.run(
+            'INSERT INTO UserEvaluationSettings (id_utilizador, field_name, weight) VALUES (?, ?, ?)',
+            [id_utilizador, field_name, weight]
+        );
+        res.status(201).json({ id_setting: result.lastID, id_utilizador, field_name, weight });
+    } catch (error) {
+        if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+            return res.status(409).json({ message: `O campo de avaliação '${field_name}' já existe para este utilizador.` });
+        }
+        console.error('Erro ao criar UserEvaluationSetting:', error);
+        res.status(500).json({ message: 'Erro ao criar configuração de avaliação.' });
+    }
+});
+
+// PUT /api/settings/evaluation-fields/:fieldName - Updates a setting for a user
+app.put('/api/settings/evaluation-fields/:fieldName', verificarToken, async (req, res) => {
+    const id_utilizador = req.utilizador.id_utilizador;
+    const fieldNameParam = decodeURIComponent(req.params.fieldName);
+    const { weight } = req.body;
+
+    if (!Number.isInteger(weight) || weight < 1 || weight > 10) {
+        return res.status(400).json({ message: 'O peso (weight) deve ser um inteiro entre 1 e 10.' });
+    }
+
+    try {
+        const db = await dbPromise;
+        const result = await db.run(
+            'UPDATE UserEvaluationSettings SET weight = ? WHERE id_utilizador = ? AND field_name = ?',
+            [weight, id_utilizador, fieldNameParam]
+        );
+
+        if (result.changes === 0) {
+            return res.status(404).json({ message: `Campo de avaliação '${fieldNameParam}' não encontrado para este utilizador.` });
+        }
+        const updatedSetting = await db.get(
+            'SELECT id_setting, id_utilizador, field_name, weight FROM UserEvaluationSettings WHERE id_utilizador = ? AND field_name = ?',
+            [id_utilizador, fieldNameParam]
+        );
+        res.status(200).json(updatedSetting);
+    } catch (error) {
+        console.error('Erro ao atualizar UserEvaluationSetting:', error);
+        res.status(500).json({ message: 'Erro ao atualizar configuração de avaliação.' });
+    }
+});
+
+// DELETE /api/settings/evaluation-fields/:fieldName - Deletes a setting for a user
+app.delete('/api/settings/evaluation-fields/:fieldName', verificarToken, async (req, res) => {
+    const id_utilizador = req.utilizador.id_utilizador;
+    const fieldNameParam = decodeURIComponent(req.params.fieldName);
+
+    try {
+        const db = await dbPromise;
+        const result = await db.run(
+            'DELETE FROM UserEvaluationSettings WHERE id_utilizador = ? AND field_name = ?',
+            [id_utilizador, fieldNameParam]
+        );
+
+        if (result.changes === 0) {
+            return res.status(404).json({ message: `Campo de avaliação '${fieldNameParam}' não encontrado para este utilizador.` });
+        }
+        res.status(200).json({ message: `Campo de avaliação '${fieldNameParam}' eliminado com sucesso.` });
+    } catch (error) {
+        console.error('Erro ao eliminar UserEvaluationSetting:', error);
+        res.status(500).json({ message: 'Erro ao eliminar configuração de avaliação.' });
+    }
+});
 
 // --- Rotas da API Coleção ---
 
@@ -331,9 +469,9 @@ console.log(`[BACKEND POST /api/colecao] Géneros recebidos no req.body.genero:`
         return res.status(400).json({ message: 'Dados incompletos (id, nome, classificacoes são obrigatórios).' });
     }
 
-    const scoreFinalCalculado = calcularScoreFinalBackend(classificacoes);
+    const db = await dbPromise; // Ensure db is resolved before calling calcularScoreFinalBackend
+    const scoreFinalCalculado = await calcularScoreFinalBackend(db, id_utilizador_logado, classificacoes);
     const dataAtual = new Date().toISOString();
-    const db = await dbPromise;
 
     try {
         await db.run('BEGIN TRANSACTION');
@@ -418,7 +556,8 @@ app.put('/api/colecao/:id', verificarToken, async (req, res) => {
         return res.status(400).json({ message: 'Nome e classificações são obrigatórios para atualização.' });
     }
 
-    const scoreFinalCalculado = calcularScoreFinalBackend(classificacoes);
+    // db is already resolved earlier in this route
+    const scoreFinalCalculado = await calcularScoreFinalBackend(db, id_utilizador_logado, classificacoes);
     const dataAtual = new Date().toISOString();
 
     try {
