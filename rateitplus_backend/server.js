@@ -83,7 +83,7 @@ async function calcularScoreFinalBackend(db, id_utilizador, classificacoes) {
       }
     } else if (criterio === 'adaptacaoRemake' && (notaRaw === null || notaRaw === '' || notaRaw === undefined)) {
       // Se for adaptacaoRemake e não tiver nota, não contabiliza o peso
-      continue;
+      continue; 
     }
   }
   const scoreCalculado = somaPesos > 0 ? parseFloat((somaPonderada / somaPesos).toFixed(2)) : 0.00;

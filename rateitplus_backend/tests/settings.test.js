@@ -13,7 +13,7 @@ const API_BASE_URL = 'http://localhost:3001/api/settings/evaluation-fields'; // 
 
 // Placeholder: Function to get a valid JWT for a test user
 // In a real scenario, you'd register a test user and log them in, or have a dedicated test token endpoint.
-let testUserToken = null;
+let testUserToken = null; 
 let testUserId = null; // Will be set after a test user is (conceptually) logged in
 
 // Helper to simulate user registration and login to get a token
@@ -28,14 +28,14 @@ async function getAuthTokenForTestUser(username = 'testuser_settings', password 
     // 3. Call POST /api/auth/login for 'testuser_settings' to get the token.
     // For this subtask, we'll just set a placeholder token.
     // Replace this with actual API calls in a full test environment.
-
+    
     // --- SIMULATED TOKEN GENERATION ---
     // This part would typically involve calling your actual login endpoint.
     // For now, let's assume a way to get a test user's ID and generate a token.
     // This is NOT how you'd do it in production testing but serves as a placeholder.
     const jwt = require('jsonwebtoken');
     const JWT_SECRET = process.env.JWT_SECRET || 'aTuaChaveSuperSecretaParaRateItPlus';
-
+    
     // Simulate fetching/creating a test user ID (e.g., 1 or a specific test user ID from your DB)
     // This is a major simplification. You'd query your DB or use a fixed test user ID.
     testUserId = 1; // Example: assuming a user with ID 1 exists for testing or will be created.
@@ -99,10 +99,10 @@ async function makeRequest(method, path, token, body = null) {
 
 // ---- Test Suite ----
 describe('User Evaluation Settings API (/api/settings/evaluation-fields)', function() {
-
+    
     before(async function() {
         // This timeout might be needed if user registration/login takes time.
-        this.timeout(10000);
+        this.timeout(10000); 
         try {
             testUserToken = await getAuthTokenForTestUser();
             if (!testUserToken) {
@@ -149,7 +149,7 @@ describe('User Evaluation Settings API (/api/settings/evaluation-fields)', funct
                 } catch (e) { /* Ignore errors during cleanup */ }
             }
         });
-
+        
         it('should add a new field successfully (201)', async () => {
             if (!testUserToken) this.skip();
             const res = await makeRequest('POST', '', testUserToken, { field_name: testFieldName, weight: 9 });
@@ -164,7 +164,7 @@ describe('User Evaluation Settings API (/api/settings/evaluation-fields)', funct
             const res = await makeRequest('POST', '', testUserToken, { weight: 5 });
             assert.strictEqual(res.statusCode, 400);
         });
-
+        
         it('should fail if weight is missing (400)', async () => {
             if (!testUserToken) this.skip();
             const res = await makeRequest('POST', '', testUserToken, { field_name: 'Another_Field' });
@@ -211,7 +211,7 @@ describe('User Evaluation Settings API (/api/settings/evaluation-fields)', funct
             await makeRequest('POST', '', testUserToken, { field_name: fieldForGet1, weight: 5 });
             await makeRequest('POST', '', testUserToken, { field_name: fieldForGet2, weight: 7 });
         });
-
+        
         it('should get all fields for a user (200)', async () => {
             if (!testUserToken) this.skip();
             const res = await makeRequest('GET', '', testUserToken);
@@ -226,7 +226,7 @@ describe('User Evaluation Settings API (/api/settings/evaluation-fields)', funct
         // This test depends on the state of the user used in other tests.
         // For a truly isolated "empty" test, you'd need a new user with no settings.
     });
-
+    
     // --- PUT Tests ---
     describe('PUT /api/settings/evaluation-fields/:fieldName', () => {
         const fieldToUpdate = 'FieldToUpdate';
@@ -270,7 +270,7 @@ describe('User Evaluation Settings API (/api/settings/evaluation-fields)', funct
             const res = await makeRequest('PUT', `/${encodeURIComponent(fieldToUpdate)}`, testUserToken, { weight: 0 });
             assert.strictEqual(res.statusCode, 400);
         });
-
+        
         it('should fail to update with invalid weight (e.g., 11) (400)', async () => {
             if (!testUserToken) this.skip();
             const res = await makeRequest('PUT', `/${encodeURIComponent(fieldToUpdate)}`, testUserToken, { weight: 11 });
@@ -288,7 +288,7 @@ describe('User Evaluation Settings API (/api/settings/evaluation-fields)', funct
             await makeRequest('DELETE', `/${encodeURIComponent(fieldToDelete)}`, testUserToken).catch(() => {});
             await makeRequest('POST', '', testUserToken, { field_name: fieldToDelete, weight: 6 });
         });
-
+        
         it('should delete an existing field successfully (200)', async () => {
             if (!testUserToken) this.skip();
             const res = await makeRequest('DELETE', `/${encodeURIComponent(fieldToDelete)}`, testUserToken);
