@@ -77,6 +77,25 @@ header h1 {
   transform: translateY(-2px);
 }
 
+/* Style for links to look like buttons in .actions-main */
+.actions-main .action-button-link {
+  display: inline-block; /* To allow padding and behave more like a button */
+  background: var(--card-glass);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius);
+  color: var(--text-light);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: none; /* Remove underline from links */
+  transition: background var(--transition), transform var(--transition);
+}
+
+.actions-main .action-button-link:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.1); /* Consistent hover with other buttons */
+}
+
 
 /* Top 5 Destaque unchanged... */
 /* ... rest of file remains as before ... */

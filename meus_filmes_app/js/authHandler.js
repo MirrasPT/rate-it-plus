@@ -2,6 +2,13 @@
 // meus_filmes_app/js/authHandler.js
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Handle redirect_to parameter
+    const queryParams = new URLSearchParams(window.location.search);
+    const redirectTo = queryParams.get('redirect_to');
+    if (redirectTo) {
+        sessionStorage.setItem('loginRedirectUrl', redirectTo);
+    }
+
     const authForm = document.getElementById('authForm');
     const authTitle = document.getElementById('authTitle');
     const usernameInput = document.getElementById('username');
@@ -77,10 +84,25 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Login bem-sucedido
                     console.log('Login bem-sucedido:', data);
                     localStorage.setItem('accessToken', data.accessToken);
+                    localStorage.setItem('accessToken', data.accessToken);
                     localStorage.setItem('nomeUtilizador', data.nome_utilizador); // Guarda nome do utilizador
                     localStorage.setItem('idUtilizador', data.id_utilizador); // Guarda ID do utilizador
-                    alert('Login efetuado com sucesso!');
-                    window.location.href = 'index.html'; // Redireciona para a página principal
+
+                    // 2. Handle redirect after successful login
+                    const redirectUrl = sessionStorage.getItem('loginRedirectUrl');
+                    if (redirectUrl) {
+                        sessionStorage.removeItem('loginRedirectUrl');
+                        // Basic validation to prevent open redirect if possible, e.g., ensure it's a relative path or specific known paths
+                        if (redirectUrl.startsWith('/') || redirectUrl.startsWith('http') === false) {
+                             window.location.href = redirectUrl;
+                        } else {
+                            console.warn(`Blocked potentially unsafe redirect to: ${redirectUrl}`);
+                            window.location.href = 'index.html'; // Fallback to default
+                        }
+                    } else {
+                        window.location.href = 'index.html'; // Redireciona para a página principal padrão
+                    }
+                    // alert('Login efetuado com sucesso!'); // Alert can be shown by the target page if needed
                 } else {
                     // Erro de login
                     displayError(data.message || 'Falha no login. Verifica as tuas credenciais.');

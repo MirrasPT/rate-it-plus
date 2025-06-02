@@ -9,7 +9,7 @@ function getToken() {
 async function fetchAndDisplaySettings() {
     const token = getToken();
     if (!token) {
-        window.location.href = 'auth.html';
+        window.location.href = 'auth.html?redirect_to=settings.html';
         return;
     }
 
@@ -240,7 +240,7 @@ function escapeHTML(str) {
 
 window.addEventListener('DOMContentLoaded', () => {
     if (!getToken()) {
-        window.location.href = 'auth.html';
+        window.location.href = 'auth.html?redirect_to=settings.html';
         return; // Stop further execution if not authenticated
     }
 
