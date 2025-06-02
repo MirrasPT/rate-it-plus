@@ -731,6 +731,16 @@ footer {
     border: 1px solid var(--accent2); /* Borda com a cor de destaque 2 */
     display: none; /* Escondido por defeito, mostrado via JavaScript */
 }
+
+/* Oculta o campo de confirmação de password por defeito */
+.confirm-password-hidden {
+    display: none;
+}
+
+/* Margem superior para o link de 'Voltar à Página Principal' */
+.auth-toggle-link-margin {
+    margin-top: 0.5rem;
+}
 /* Fim Estilos Auth Page */
 
 /* Estilos Formulário Page */
