@@ -7,10 +7,14 @@ function getToken() {
 }
 
 async function fetchAndDisplaySettings() {
-    const token = getToken();
+    console.log('[SettingsHandler - fetchAndDisplaySettings] Attempting to fetch settings.');
+    const token = getToken(); // Or however token is accessed here
+    console.log('[SettingsHandler - fetchAndDisplaySettings] Token for API call:', token ? 'Yes' : 'No', token);
     if (!token) {
-        window.location.href = 'auth.html?redirect_to=settings.html';
-        return;
+        const redirectTo = 'auth.html?redirect_to=settings.html';
+        console.log('[SettingsHandler - fetchAndDisplaySettings] No token, redirecting to:', redirectTo);
+        window.location.href = redirectTo;
+        return; // Important to stop further execution
     }
 
     const fieldsListDiv = document.getElementById('fields-list');
@@ -239,12 +243,42 @@ function escapeHTML(str) {
 
 
 window.addEventListener('DOMContentLoaded', () => {
-    if (!getToken()) {
-        window.location.href = 'auth.html?redirect_to=settings.html';
-        return; // Stop further execution if not authenticated
+    console.log('[SettingsHandler] Page loaded. Checking token...');
+    // NEW: Check for the "justLoggedInToSettings" flag
+    const justLoggedInFlag = sessionStorage.getItem('justLoggedInToSettings');
+    if (justLoggedInFlag === 'true') {
+        sessionStorage.removeItem('justLoggedInToSettings');
+        console.log('[SettingsHandler] "justLoggedInToSettings" flag found and removed. Delaying initial redirect decision.');
+        // Proceed to let fetchAndDisplaySettings handle token and API calls,
+        // assuming it will have a more up-to-date view of localStorage or will make an API call.
+        // This bypasses an immediate redirect back to auth.html on the very first load after login.
+        if (localStorage.getItem('token')) { // Still good to check token before calling main functions
+             console.log('[SettingsHandler] Token seems present after flag check, calling fetchAndDisplaySettings.');
+             fetchAndDisplaySettings();
+        } else {
+            // This case is less likely if authHandler set the token, but as a fallback:
+            console.warn('[SettingsHandler] "justLoggedInToSettings" flag was set, but token still not found immediately. Proceeding cautiously.');
+            // Option 1: Still try to load, fetchAndDisplaySettings will handle its own auth check.
+            fetchAndDisplaySettings();
+            // Option 2: Or, if this state is deemed erroneous, redirect to login without the flag.
+            // window.location.href = 'auth.html?redirect_to=settings.html';
+        }
+    } else {
+        // Original logic: if no flag, check token and redirect if missing.
+        console.log('[SettingsHandler] "justLoggedInToSettings" flag NOT found. Performing standard token check.');
+        const token = localStorage.getItem('token'); // getToken() already calls localStorage.getItem('token')
+        console.log('[SettingsHandler] Token found in localStorage:', token ? 'Yes' : 'No', token);
+        if (!token) {
+            const redirectTo = 'auth.html?redirect_to=settings.html';
+            console.log('[SettingsHandler] No token (and no flag), redirecting to:', redirectTo);
+            window.location.href = redirectTo;
+            return; // Stop further execution if not authenticated
+        } else {
+            // Call fetchAndDisplaySettings or other init functions
+            console.log('[SettingsHandler] Token exists (no flag), proceeding to load settings.');
+            fetchAndDisplaySettings();
+        }
     }
-
-    fetchAndDisplaySettings();
 
     const addFieldForm = document.getElementById('add-field-form');
     if (addFieldForm) {

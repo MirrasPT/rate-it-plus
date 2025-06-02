@@ -3,10 +3,15 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Handle redirect_to parameter
+    console.log('[AuthHandler] Auth page loaded. Full URL:', window.location.href);
     const queryParams = new URLSearchParams(window.location.search);
-    const redirectTo = queryParams.get('redirect_to');
+    const redirectTo = queryParams.get('redirect_to'); // Renamed for clarity within this scope
+    console.log('[AuthHandler] "redirect_to" URL param:', redirectTo);
     if (redirectTo) {
         sessionStorage.setItem('loginRedirectUrl', redirectTo);
+        console.log('[AuthHandler] Stored in sessionStorage "loginRedirectUrl":', redirectTo);
+    } else {
+        console.log('[AuthHandler] No "redirect_to" param found.');
     }
 
     const authForm = document.getElementById('authForm');
@@ -82,24 +87,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (response.ok) {
                     // Login bem-sucedido
-                    console.log('Login bem-sucedido:', data);
-                    localStorage.setItem('accessToken', data.accessToken);
-                    localStorage.setItem('accessToken', data.accessToken);
+                    // console.log('Login bem-sucedido:', data); // Already exists
+                    console.log('[AuthHandler] Login API call successful.');
+                    localStorage.setItem('accessToken', data.accessToken); // Corrected duplicate line
                     localStorage.setItem('nomeUtilizador', data.nome_utilizador); // Guarda nome do utilizador
                     localStorage.setItem('idUtilizador', data.id_utilizador); // Guarda ID do utilizador
+                    console.log('[AuthHandler] Token and user info stored in localStorage.');
 
                     // 2. Handle redirect after successful login
                     const redirectUrl = sessionStorage.getItem('loginRedirectUrl');
+                    console.log('[AuthHandler] Retrieved from sessionStorage "loginRedirectUrl":', redirectUrl);
+
                     if (redirectUrl) {
                         sessionStorage.removeItem('loginRedirectUrl');
+                        console.log('[AuthHandler] Removed "loginRedirectUrl" from sessionStorage.');
+                        // NEW: Set a flag if redirecting to settings.html
+                        if (redirectUrl.includes('settings.html')) {
+                            sessionStorage.setItem('justLoggedInToSettings', 'true');
+                            console.log('[AuthHandler] Set "justLoggedInToSettings" flag for settings page.');
+                        }
+                        console.log('[AuthHandler] Redirecting to:', redirectUrl);
                         // Basic validation to prevent open redirect if possible, e.g., ensure it's a relative path or specific known paths
                         if (redirectUrl.startsWith('/') || redirectUrl.startsWith('http') === false) {
                              window.location.href = redirectUrl;
                         } else {
-                            console.warn(`Blocked potentially unsafe redirect to: ${redirectUrl}`);
+                            console.warn(`[AuthHandler] Blocked potentially unsafe redirect to: ${redirectUrl}. Falling back to index.html.`);
                             window.location.href = 'index.html'; // Fallback to default
                         }
                     } else {
+                        console.log('[AuthHandler] No "loginRedirectUrl" in sessionStorage. Redirecting to index.html.');
                         window.location.href = 'index.html'; // Redireciona para a página principal padrão
                     }
                     // alert('Login efetuado com sucesso!'); // Alert can be shown by the target page if needed
