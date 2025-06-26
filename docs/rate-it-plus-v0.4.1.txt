@@ -1,0 +1,22 @@
+Resumo das Alterações Realizadas
+Implementámos uma grande parte da nova funcionalidade de registo de utilizador passo a passo com personalização de critérios.
+
+Ficheiros Modificados e Criados:
+
+rateitplus_backend/server.js:
+
+Alterámos a estrutura da base de dados para suportar critérios e pesos personalizados por utilizador (novas tabelas CriteriosPadrao e CriteriosUtilizador, e modificação da Avaliacoes).
+
+Adicionámos dois novos endpoints na API: /api/criterios-padrao e /api/auth/registo-completo.
+
+meus_filmes_app/registo.html (Ficheiro Novo):
+
+Criámos a estrutura HTML completa para o novo fluxo de registo de 4 passos.
+
+meus_filmes_app/js/registoHandler.js (Ficheiro Novo):
+
+Implementámos toda a lógica de frontend para gerir a navegação entre os passos, ir buscar os critérios ao backend, renderizar as checkboxes e os sliders, e submeter o formulário final.
+
+meus_filmes_app/css/style.css:
+
+Adicionámos novos estilos para suportar os elementos do novo formulário (como .form-group-checkbox e .form-group-slider).

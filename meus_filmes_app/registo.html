@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cria a tua conta - Rate It Plus</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page-body">
+
+    <div class="auth-container" style="max-width: 700px;"> <h1 id="registo-title">Cria a tua Conta (Passo 1 de 4)</h1>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="registoForm" class="auth-form">
+
+            <div id="step1-dados-utilizador" class="form-step active">
+                <div class="form-group">
+                    <label for="username">Nome de Utilizador / Nickname</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Palavra-passe (mín. 6 caracteres)</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                 <div class="form-group">
+                    <label for="confirmPassword">Confirmar Palavra-passe</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+            </div>
+
+            <div id="step2-selecionar-criterios" class="form-step">
+                <p style="margin-bottom: 1rem;">Para começar, seleciona os critérios que queres usar nas tuas avaliações. Podes sempre alterá-los mais tarde.</p>
+                <div id="criterios-checkbox-lista"></div>
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label for="novoCriterioNome">Adicionar o teu próprio critério?</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="novoCriterioNome" placeholder="Ex: Fotografia, Vibe...">
+                        <button type="button" id="btnAdicionarCriterio" class="btn">Adicionar</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="step3-ajustar-pesos" class="form-step">
+                <p style="margin-bottom: 1rem;">Excelente! Agora, define a importância (peso) de cada critério que escolheste, de 0 a 10.</p>
+                <div id="pesos-sliders-lista"></div>
+            </div>
+
+            <div id="step4-primeiro-filme" class="form-step">
+                <p>Quase lá! Para finalizar, pesquisa e adiciona o primeiro item à tua coleção.</p>
+                
+                <div class="tmdb-search-section" style="padding: 0; border: none; background: none; margin-top: 1.5rem;">
+                    <div class="search-controls">
+                        <input type="text" id="tmdbSearchQuery" placeholder="Ex: Inception, Breaking Bad...">
+                        <select id="tmdbSearchType">
+                          <option value="multi">Tudo</option>
+                          <option value="movie">Filmes</option>
+                          <option value="tv">Séries</option>
+                        </select>
+                        <button type="button" id="btnTmdbSearch">Pesquisar</button>
+                    </div>
+                    <div id="tmdbSearchResults" style="margin-top: 1rem;">
+                        </div>
+                </div>
+
+                <div id="onboarding-avaliacao-section" style="display: none;">
+                    <h3 id="item-selecionado-titulo"></h3>
+                    </div>
+
+                <div style="text-align: center; margin-top: 1rem; font-size: 0.9rem;">
+                    <a href="#" id="skip-add-movie">Adicionar mais tarde</a>
+                </div>
+            </div>
+
+            <div class="form-navigation" style="margin-top: 1.5rem; display: flex; justify-content: space-between;">
+                <button type="button" id="btnAnterior" class="btn" style="visibility: hidden;">Anterior</button>
+                <button type="button" id="btnProximo" class="btn btn-primary">Próximo</button>
+                <button type="submit" id="btnFinalizar" class="btn btn-primary" style="display: none;">Criar Conta</button>
+            </div>
+
+        </form>
+
+        <div class="auth-toggle" style="margin-top: 1.5rem;">
+            <p>Já tens conta? <a href="auth.html">Faz login aqui</a></p>
+        </div>
+    </div>
+    
+    <script src="js/apiService.js"></script>
+    <script src="js/registoHandler.js"></script>
+
+</body>
+</html>

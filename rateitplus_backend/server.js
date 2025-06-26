@@ -80,7 +80,7 @@ async function initializeDbConnection() {
 
 async function initializeDatabase(db) {
     try {
-        // Tabela Utilizadores
+        // Tabela Utilizadores (sem alterações por agora)
         await db.exec(`
             CREATE TABLE IF NOT EXISTS Utilizadores (
                 id_utilizador INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -91,7 +91,48 @@ async function initializeDatabase(db) {
         `);
         console.log("Tabela 'Utilizadores' (SQLite) verificada/criada com sucesso.");
 
-        // Tabela ItensMedia - ADICIONAR id_utilizador
+        // NOVA: Tabela CriteriosPadrao
+        // Objetivo: Armazenar critérios sugeridos para o onboarding de novos utilizadores.
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS CriteriosPadrao (
+                id_criterio_padrao INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome_criterio TEXT UNIQUE NOT NULL,
+                descricao TEXT
+            );
+        `);
+        console.log("Tabela 'CriteriosPadrao' (SQLite) verificada/criada com sucesso.");
+        
+        // Popular a tabela de critérios padrão apenas se estiver vazia (para evitar duplicados)
+        const count = await db.get('SELECT COUNT(*) as count FROM CriteriosPadrao');
+        if (count.count === 0) {
+            const criterios = [
+                'História & Enredo', 'Roteiro / Diálogos', 'Construção de Mundo', 
+                'Desenvolvimento de Personagens', 'Música', 'Efeitos Sonoros', 
+                'Artes Visuais', 'Impacto Emocional', 'Originalidade', 'Ritmo', 'Humor',
+                'Adaptação/Remake'
+            ];
+            const stmt = await db.prepare('INSERT INTO CriteriosPadrao (nome_criterio) VALUES (?)');
+            for (const nome of criterios) {
+                await stmt.run(nome);
+            }
+            await stmt.finalize();
+            console.log("Tabela 'CriteriosPadrao' populada com valores iniciais.");
+        }
+
+        // NOVA: Tabela CriteriosUtilizador
+        // Objetivo: Guardar os critérios e pesos personalizados para cada utilizador.
+        await db.exec(`
+            CREATE TABLE IF NOT EXISTS CriteriosUtilizador (
+                id_criterio_utilizador INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_utilizador INTEGER NOT NULL,
+                nome_criterio TEXT NOT NULL,
+                peso REAL NOT NULL DEFAULT 5,
+                FOREIGN KEY (id_utilizador) REFERENCES Utilizadores(id_utilizador) ON DELETE CASCADE
+            );
+        `);
+        console.log("Tabela 'CriteriosUtilizador' (SQLite) verificada/criada com sucesso.");
+        
+        // Tabela ItensMedia (sem alterações)
         await db.exec(`
             CREATE TABLE IF NOT EXISTS ItensMedia (
                 id TEXT PRIMARY KEY,
@@ -111,21 +152,23 @@ async function initializeDatabase(db) {
                 FOREIGN KEY (id_utilizador) REFERENCES Utilizadores(id_utilizador) ON DELETE CASCADE
             );
         `);
-        console.log("Tabela 'ItensMedia' (SQLite) verificada/criada e id_utilizador adicionado/verificado.");
+        console.log("Tabela 'ItensMedia' (SQLite) verificada/criada.");
 
-        // Tabela Avaliacoes - id_item já é FK para ItensMedia
+        // MODIFICADA: Tabela Avaliacoes
+        // Objetivo: Ligar a nota a um critério específico do utilizador, em vez de um texto genérico.
         await db.exec(`
             CREATE TABLE IF NOT EXISTS Avaliacoes (
                 id_avaliacao INTEGER PRIMARY KEY AUTOINCREMENT,
                 id_item TEXT NOT NULL,
-                criterio TEXT NOT NULL,
+                id_criterio_utilizador INTEGER NOT NULL, -- Modificado de "criterio TEXT"
                 nota REAL,
-                FOREIGN KEY (id_item) REFERENCES ItensMedia(id) ON DELETE CASCADE
+                FOREIGN KEY (id_item) REFERENCES ItensMedia(id) ON DELETE CASCADE,
+                FOREIGN KEY (id_criterio_utilizador) REFERENCES CriteriosUtilizador(id_criterio_utilizador) ON DELETE CASCADE
             );
         `);
-        console.log("Tabela 'Avaliacoes' (SQLite) verificada/criada com sucesso.");
+        console.log("Tabela 'Avaliacoes' (SQLite) verificada/modificada com sucesso.");
 
-        // Tabela GenerosItem - id_item já é FK para ItensMedia
+        // Tabela GenerosItem (sem alterações)
         await db.exec(`
             CREATE TABLE IF NOT EXISTS GenerosItem (
                 id_genero_item INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -136,7 +179,7 @@ async function initializeDatabase(db) {
         `);
         console.log("Tabela 'GenerosItem' (SQLite) verificada/criada com sucesso.");
         
-        // Tabela RelacionadosItem - id_item1 e id_item2 já são FK para ItensMedia
+        // Tabela RelacionadosItem (sem alterações)
         await db.exec(`
             CREATE TABLE IF NOT EXISTS RelacionadosItem (
                 id_relacionado_item INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -148,7 +191,6 @@ async function initializeDatabase(db) {
             );
         `);
         console.log("Tabela 'RelacionadosItem' (SQLite) verificada/criada com sucesso.");
-
 
     } catch (error) {
         console.error("Erro ao inicializar as tabelas (SQLite):", error);
@@ -175,7 +217,9 @@ function verificarToken(req, res, next) {
 }
 
 
-// --- Rotas de Autenticação ---
+
+// --- Rotas de Autenticação e Onboarding ---
+
 app.post('/api/auth/registo', async (req, res) => {
     const { nome_utilizador, palavra_passe } = req.body;
     // console.log(`POST /api/auth/registo - Recebido: ${nome_utilizador}`); // Log pode ser verboso
@@ -245,6 +289,75 @@ app.post('/api/auth/login', async (req, res) => {
     } catch (error) {
         console.error('Erro no login:', error);
         res.status(500).json({ message: `Erro ao fazer login: ${error.message}` });
+    }
+});
+
+// ROTA: Obter os critérios padrão para sugestão no frontend
+app.get('/api/criterios-padrao', async (req, res) => {
+    try {
+        const db = await dbPromise;
+        const criterios = await db.all('SELECT id_criterio_padrao, nome_criterio FROM CriteriosPadrao ORDER BY nome_criterio');
+        res.json(criterios);
+    } catch (error) {
+        console.error('Erro ao obter critérios padrão:', error);
+        res.status(500).json({ message: 'Erro ao obter dados dos critérios.' });
+    }
+});
+
+// ROTA: Registar um novo utilizador com os seus critérios personalizados
+app.post('/api/auth/registo-completo', async (req, res) => {
+    const { nome_utilizador, palavra_passe, criterios } = req.body;
+
+    if (!nome_utilizador || !palavra_passe || !criterios || !Array.isArray(criterios) || criterios.length === 0) {
+        return res.status(400).json({ message: 'Dados incompletos. É necessário nome de utilizador, palavra-passe e uma lista de critérios.' });
+    }
+    if (palavra_passe.length < 6) {
+        return res.status(400).json({ message: 'A palavra-passe deve ter pelo menos 6 caracteres.' });
+    }
+
+    const db = await dbPromise;
+    try {
+        const utilizadorExistente = await db.get('SELECT * FROM Utilizadores WHERE nome_utilizador = ?', nome_utilizador);
+        if (utilizadorExistente) {
+            return res.status(409).json({ message: 'Este nome de utilizador já está a ser utilizado.' });
+        }
+
+        await db.run('BEGIN TRANSACTION');
+
+        const saltRounds = 10;
+        const palavraPasseHash = await bcrypt.hash(palavra_passe, saltRounds);
+        
+        const resultUtilizador = await db.run(
+            'INSERT INTO Utilizadores (nome_utilizador, palavra_passe_hash) VALUES (?, ?)',
+            [nome_utilizador, palavraPasseHash]
+        );
+        const novoIdUtilizador = resultUtilizador.lastID;
+
+        const stmtCriterio = await db.prepare(
+            'INSERT INTO CriteriosUtilizador (id_utilizador, nome_criterio, peso) VALUES (?, ?, ?)'
+        );
+        
+        for (const criterio of criterios) {
+            if (!criterio.nome_criterio || criterio.peso === undefined) {
+                await db.run('ROLLBACK');
+                return res.status(400).json({ message: `Critério inválido fornecido: ${JSON.stringify(criterio)}` });
+            }
+            await stmtCriterio.run(novoIdUtilizador, criterio.nome_criterio, criterio.peso);
+        }
+        await stmtCriterio.finalize();
+
+        await db.run('COMMIT');
+
+        res.status(201).json({ 
+            message: 'Utilizador e critérios registados com sucesso!', 
+            id_utilizador: novoIdUtilizador,
+            nome_utilizador: nome_utilizador 
+        });
+
+    } catch (error) {
+        await db.run('ROLLBACK');
+        console.error('Erro no registo completo:', error);
+        res.status(500).json({ message: `Erro ao registar utilizador: ${error.message}` });
     }
 });
 

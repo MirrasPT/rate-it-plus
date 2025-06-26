@@ -602,6 +602,129 @@ footer {
   margin: 3rem auto 1rem;
 }
 
+.form-step {
+    display: none;
+}
+/* Mostra o passo que tem a classe 'active' (será controlada por JS) */
+.form-step.active {
+    display: block;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Animação de fade-in para as transições entre passos */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Estilo para alinhar um label e um input na mesma linha */
+.form-group-horizontal {
+    display: flex;
+    justify-content: space-between; /* Coloca o label à esquerda e o input à direita */
+    align-items: center; /* Alinha verticalmente no centro */
+    margin-bottom: 0.8rem;
+    padding: 0.5rem;
+    border: 1px solid var(--card-glass);
+    border-radius: var(--radius);
+}
+
+.form-group-horizontal label {
+    margin-bottom: 0; /* Remove a margem inferior do label neste contexto */
+    flex-grow: 1; /* Faz o label ocupar o espaço disponível */
+}
+
+.form-group-horizontal input {
+    width: 80px; /* Define uma largura fixa para o campo do peso */
+    flex-shrink: 0; /* Impede que o input encolha */
+    text-align: center;
+}
+
+
+/* meus_filmes_app/css/style.css */
+
+/* ... (todo o código CSS existente) ... */
+
+/* --- Estilos Adicionais para a Página de Registo (Novos Passos) --- */
+
+/* Estilo para a lista de checkboxes de critérios (Passo 2) */
+#criterios-checkbox-lista {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Duas colunas */
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+/* Container para cada checkbox + label */
+.form-group-checkbox {
+    display: flex;
+    align-items: center;
+    background: var(--card-glass);
+    padding: 0.8rem;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    transition: all var(--transition);
+    cursor: pointer;
+}
+
+.form-group-checkbox:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent);
+}
+
+.form-group-checkbox input[type="checkbox"] {
+    margin-right: 0.8rem;
+    /* Estilos para customizar a checkbox (opcional, mas recomendado para consistência de design) */
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent2); /* Muda a cor da checkbox quando marcada */
+}
+
+.form-group-checkbox label {
+    margin-bottom: 0;
+    cursor: pointer;
+    flex-grow: 1;
+}
+
+/* Estilo para a lista de sliders de pesos (Passo 3) */
+#pesos-sliders-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Mais espaço vertical entre os sliders */
+}
+
+/* Container para cada label + slider + valor */
+.form-group-slider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.form-group-slider label {
+    flex-basis: 40%; /* Define uma largura base para o nome do critério */
+    margin-bottom: 0;
+    text-align: right;
+}
+
+.form-group-slider input[type="range"] {
+    flex-grow: 1; /* Faz o slider ocupar o espaço restante */
+    accent-color: var(--accent); /* Muda a cor do slider */
+}
+
+.form-group-slider .slider-value {
+    flex-basis: 50px; /* Largura fixa para o valor numérico */
+    font-weight: 600;
+    color: var(--accent);
+    text-align: center;
+    background: var(--card-glass);
+    padding: 0.3rem;
+    border-radius: var(--radius);
+}
 
 @media (max-width: 768px) {
   .app-window {
