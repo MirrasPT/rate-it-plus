@@ -140,6 +140,30 @@ async function getItemDaColecaoPorId(id) {
   }
 }
 
+/**
+ * Obtém os critérios e pesos personalizados do utilizador autenticado.
+ * Retorna um objeto no formato { historiaEnredo: 9, ritmo: 7, ... }
+ */
+async function obterCriteriosDoUtilizador() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/criterios`, {
+        headers: getAuthHeaders() // Reutiliza a função que já temos para adicionar o token
+    });
+    if (!response.ok) {
+        // Se a resposta for 401/403, a lógica dentro de getAuthHeaders ou obterColecaoCompleta já lida com o redirecionamento
+        const errorData = await response.json().catch(() => ({ message: 'Falha ao obter critérios do utilizador.' }));
+        throw new Error(errorData.message);
+    }
+    const criterios = await response.json();
+    console.log("Critérios personalizados do utilizador obtidos:", criterios);
+    return criterios;
+  } catch (error) {
+    console.error('Erro em obterCriteriosDoUtilizador:', error);
+    alert(`Erro ao carregar os seus critérios personalizados: ${error.message}`);
+    return null; // Retorna null em caso de erro para o formHandler saber que algo correu mal
+  }
+}
+
 async function obterColecaoCompleta() {
   try {
     const response = await fetch(`${BACKEND_URL}/colecao`, {

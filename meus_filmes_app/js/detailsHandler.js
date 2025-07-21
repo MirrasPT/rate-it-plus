@@ -11,11 +11,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const itemIdioma = document.getElementById('itemIdioma');
   const itemAnoLancamento = document.getElementById('itemAnoLancamento');
   
-  // Elementos para o Score e Ranking
-  const scorePrincipalEl = document.getElementById('itemScoreFinal'); // O score grande e em destaque
+  const scorePrincipalEl = document.getElementById('itemScoreFinal');
   const rankBadgeEl = document.getElementById('rankBadge');
   
-  // Elementos Meta (na secção de grelha de detalhes)
   const itemScoreFinalMetaEl = document.getElementById('itemScoreFinalMeta');
   const itemAnoLancamentoMetaEl = document.getElementById('itemAnoLancamentoMeta');
   const itemGeneroMetaEl = document.getElementById('itemGeneroMeta');
@@ -23,28 +21,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   const btnTrailer = document.getElementById('btnTrailer');
   const bgBlur = document.getElementById('bgBlur');
 
-  // Spans de classificações
-  const classSpans = {
-    historiaEnredo: document.getElementById('classHistoriaEnredo'),
-    roteiroDialogos: document.getElementById('classRoteiroDialogos'),
-    construcaoMundo: document.getElementById('classConstrucaoMundo'),
-    desenvolvimentoPersonagens: document.getElementById('classDesenvolvimentoPersonagens'),
-    musica: document.getElementById('classMusica'),
-    efeitosSonoros: document.getElementById('classEfeitosSonoros'),
-    artesVisuais: document.getElementById('classArtesVisuais'),
-    impactoEmocional: document.getElementById('classImpactoEmocional'),
-    originalidade: document.getElementById('classOriginalidade'),
-    ritmo: document.getElementById('classRitmo'),
-    humor: document.getElementById('classHumor'),
-    adaptacaoRemake: document.getElementById('classAdaptacaoRemake')
-  };
+  // --- NOVIDADE: Container para as classificações dinâmicas ---
+  const gridClassificacoesContainer = document.getElementById('grid-classificacoes-detalhes');
 
-  // Botões de Ação
   const btnEditarItem = document.getElementById('btnEditarItem');
   const btnEliminarItem = document.getElementById('btnEliminarItem');
   const btnVoltarLista = document.getElementById('btnVoltarLista');
 
-  // Secção de Relacionados
   const relacionadosSection = document.getElementById('relacionadosSection');
   const relacionadosGrid = document.getElementById('relacionadosGrid');
 
@@ -54,22 +37,49 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (!itemId) {
     alert('ID do item não fornecido.');
-    window.location.href = 'index.html'; //
+    window.location.href = 'index.html';
     return;
   }
 
   if(itemNameH1) itemNameH1.textContent = 'A carregar detalhes...';
-  if(relacionadosSection) relacionadosSection.style.display = 'none'; // Esconder por defeito
+  if(relacionadosSection) relacionadosSection.style.display = 'none';
+
+  /**
+   * NOVA FUNÇÃO: Renderiza as classificações dinamicamente
+   * @param {Object} classificacoes - Objeto com as classificações, ex: { historiaEnredo: 9.0, ... }
+   */
+  function renderizarClassificacoes(classificacoes) {
+    if (!gridClassificacoesContainer) return;
+    gridClassificacoesContainer.innerHTML = ''; // Limpa o container
+
+    if (!classificacoes || Object.keys(classificacoes).length === 0) {
+      gridClassificacoesContainer.innerHTML = '<p>Nenhuma classificação pessoal adicionada.</p>';
+      return;
+    }
+
+    // Ordena as chaves para uma exibição consistente
+    const chavesOrdenadas = Object.keys(classificacoes).sort();
+
+    for (const key of chavesOrdenadas) {
+      const nota = classificacoes[key];
+      const notaFormatada = (nota !== null && nota !== undefined) ? parseFloat(nota).toFixed(1) : 'N/A';
+      
+      // Recria o nome "legível" a partir da chave (ex: 'historiaEnredo' -> 'Historia Enredo')
+      const nomeCriterio = key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+
+      const div = document.createElement('div');
+      div.innerHTML = `<strong>${nomeCriterio}:</strong><span>${notaFormatada}</span>`;
+      gridClassificacoesContainer.appendChild(div);
+    }
+  }
 
   try {
-    const item = await getItemDaColecaoPorId(itemId); //
-    // ADICIONE ESTA LINHA PARA DEPURAÇÃO:
+    const item = await getItemDaColecaoPorId(itemId);
     console.log('[Details Handler] Dados do item recebidos:', JSON.stringify(item, null, 2));
 
     if (!item) {
       alert('Item não encontrado ou falha ao carregar.');
       if(itemNameH1) itemNameH1.textContent = 'Item não encontrado.';
-      // window.location.href = 'index.html'; // // Redirecionar pode ser muito abrupto
       return;
     }
 
@@ -85,9 +95,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         itemImagem.alt = `Capa de ${item.nome || 'item desconhecido'}`;
     }
     if(itemSinopse) itemSinopse.textContent = item.sinopse || 'Sem sinopse disponível.';
-    if(itemReview) itemReview.textContent = item.review || ''; // Review pessoal
+    if(itemReview) itemReview.textContent = item.review || '';
 
-    const generosArray = item.genero || []; // Vem como array do dataManager
+    const generosArray = item.genero || [];
     const generosTexto = generosArray.length > 0 ? generosArray.join(', ') : 'N/A';
     if(itemGenero) itemGenero.textContent = generosTexto;
     if(itemGeneroMetaEl) itemGeneroMetaEl.textContent = generosTexto;
@@ -104,10 +114,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(scorePrincipalEl) scorePrincipalEl.textContent = scoreFormatado;
     if(itemScoreFinalMetaEl) itemScoreFinalMetaEl.textContent = scoreFormatado;
 
-    // Calcular e exibir ranking
-    if (rankBadgeEl) { // Apenas tenta calcular se o elemento existir
+    if (rankBadgeEl) {
         try {
-            const todosItens = await obterColecaoCompleta(); //
+            const todosItens = await obterColecaoCompleta();
             const rankingOrdenado = todosItens
                 .filter(it => typeof it.scoreFinal === 'number' && !isNaN(it.scoreFinal))
                 .sort((a, b) => b.scoreFinal - a.scoreFinal);
@@ -121,7 +130,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Trailer
     if (btnTrailer) {
       if (item.trailerUrl) {
         btnTrailer.href = item.trailerUrl;
@@ -131,49 +139,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Classificações
-    // O objeto item.classificacoes já deve vir mapeado do dataManager
-    const c = item.classificacoes || {}; 
-    for (const key in classSpans) {
-      if (classSpans[key]) {
-        const nota = c[key];
-        // Trata notas como números e formata para uma casa decimal, ou exibe N/A
-        const notaNumerica = parseFloat(nota);
-        classSpans[key].textContent = (nota !== undefined && nota !== null && nota !== '' && !isNaN(notaNumerica)) 
-                                      ? notaNumerica.toFixed(1) 
-                                      : 'N/A';
-      }
-    }
-    // Tratamento específico para adaptacaoRemake se for opcional e puder ser null/vazio e não queremos "0.0"
-    if (classSpans.adaptacaoRemake && (c.adaptacaoRemake === null || c.adaptacaoRemake === undefined || c.adaptacaoRemake === '')) {
-        classSpans.adaptacaoRemake.textContent = 'N/A';
-    }
+    // --- NOVIDADE: Chama a nova função para renderizar as classificações ---
+    renderizarClassificacoes(item.classificacoes);
 
 
-    // Preencher Relacionados (se existirem e a secção estiver no HTML)
+    // Preencher Relacionados (se existirem)
     if (relacionadosGrid && relacionadosSection && Array.isArray(item.relacionados) && item.relacionados.length > 0) {
-      relacionadosGrid.innerHTML = ''; // Limpa antes de popular
+      relacionadosGrid.innerHTML = '';
       let relacionadosEncontradosCount = 0;
       for (const relId of item.relacionados) {
-        const relItem = await getItemDaColecaoPorId(relId); //
+        const relItem = await getItemDaColecaoPorId(relId);
         if (relItem) {
           relacionadosEncontradosCount++;
           const card = document.createElement('div');
-          card.className = 'rel-card'; //
+          card.className = 'rel-card';
           card.innerHTML = `
             <img src="${relItem.urlImagem || 'https://via.placeholder.com/150x225.png?text=Sem+Capa'}" alt="${relItem.nome}">
             <span>${relItem.nome}</span>
           `;
           card.addEventListener('click', () => {
-            window.location.href = `detalhes.html?id=${relItem.id}`; //
+            window.location.href = `detalhes.html?id=${relItem.id}`;
           });
           relacionadosGrid.appendChild(card);
         }
       }
       if (relacionadosEncontradosCount > 0) {
           relacionadosSection.style.display = 'block';
-      } else {
-          relacionadosSection.style.display = 'none';
       }
     } else if (relacionadosSection) {
       relacionadosSection.style.display = 'none';
@@ -182,30 +173,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Event Listeners para Botões ---
     if (btnEditarItem) {
       btnEditarItem.addEventListener('click', () => {
-        window.location.href = `formulario.html?id=${itemId}`; //
+        window.location.href = `formulario.html?id=${itemId}`;
       });
     }
 
     if (btnEliminarItem) {
       btnEliminarItem.addEventListener('click', async () => {
         if (confirm(`Tem a certeza que quer eliminar "${item.nome || 'este item'}"?`)) {
-          btnEliminarItem.disabled = true; // Desabilitar para evitar cliques múltiplos
+          btnEliminarItem.disabled = true;
           btnEliminarItem.textContent = 'A eliminar...';
           try {
-            const sucesso = await eliminarItemDaColecao(itemId); //
+            const sucesso = await eliminarItemDaColecao(itemId);
             if (sucesso) {
               alert('Item eliminado com sucesso.');
-              window.location.href = 'index.html'; //
+              window.location.href = 'index.html';
             } else {
-              // A função dataManager já deve ter dado um alert
               btnEliminarItem.disabled = false;
-              btnEliminarItem.textContent = '🗑'; // Reset texto do botão
+              btnEliminarItem.textContent = '🗑';
             }
           } catch (error) {
-            console.error("Erro ao tentar eliminar item:", error);
             alert("Ocorreu um erro ao eliminar o item. Tente novamente.");
             btnEliminarItem.disabled = false;
-            btnEliminarItem.textContent = '🗑'; // Reset texto do botão
+            btnEliminarItem.textContent = '🗑';
           }
         }
       });
@@ -213,13 +202,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (btnVoltarLista) {
       btnVoltarLista.addEventListener('click', () => {
-        window.location.href = 'index.html'; //
+        window.location.href = 'index.html';
       });
     }
 
   } catch (error) {
     console.error('Erro fatal ao carregar detalhes do item:', error);
     if(itemNameH1) itemNameH1.textContent = 'Erro ao carregar item.';
-    // Poderia adicionar uma mensagem de erro mais visível para o utilizador na página
   }
 });

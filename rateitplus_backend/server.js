@@ -255,6 +255,8 @@ app.post('/api/auth/registo', async (req, res) => {
     }
 });
 
+
+
 app.post('/api/auth/login', async (req, res) => {
     const { nome_utilizador, palavra_passe } = req.body;
     // console.log(`POST /api/auth/login - Tentativa de login para: ${nome_utilizador}`); // Log pode ser verboso
@@ -361,6 +363,79 @@ app.post('/api/auth/registo-completo', async (req, res) => {
     }
 });
 
+// rateitplus_backend/server.js
+
+// ... (depois do app.post('/api/auth/registo-completo', ...))
+
+app.get('/api/criterios', verificarToken, async (req, res) => {
+    const id_utilizador = req.utilizador.id_utilizador;
+
+    try {
+        const db = await dbPromise;
+        const criterios = await db.all(
+            'SELECT nome_criterio, peso FROM CriteriosUtilizador WHERE id_utilizador = ? ORDER BY nome_criterio ASC',
+            [id_utilizador]
+        );
+
+        if (!criterios || criterios.length === 0) {
+            // Se o utilizador não tiver critérios, retorna um array vazio.
+            return res.json([]);
+        }
+
+        // --- LÓGICA ATUALIZADA ---
+        // Transforma o array para um formato mais útil para o frontend,
+        // mantendo o nome original e criando a chave camelCase.
+        const criteriosFormatados = criterios.map(item => {
+            const key = item.nome_criterio.charAt(0).toLowerCase() + item.nome_criterio.slice(1).replace(/[^a-zA-Z0-9]/g, '');
+            return {
+                key: key,                   // ex: historiaEnredo
+                nome: item.nome_criterio,   // ex: História & Enredo
+                peso: item.peso             // ex: 9.0
+            };
+        });
+
+        res.json(criteriosFormatados);
+
+    } catch (error) {
+        console.error('Erro ao obter critérios do utilizador:', error);
+        res.status(500).json({ message: 'Erro interno ao obter os critérios.' });
+    }
+});
+
+// rateitplus_backend/server.js
+
+// ... (logo após a rota GET /api/criterios)
+
+// ROTA: Eliminar a conta de um utilizador autenticado
+app.delete('/api/utilizador', verificarToken, async (req, res) => {
+    const id_utilizador = req.utilizador.id_utilizador;
+    console.log(`[BACKEND LOG] Recebido pedido para eliminar conta do utilizador ID: ${id_utilizador}`);
+
+    if (!id_utilizador) {
+        return res.status(400).json({ message: 'ID do utilizador inválido.' });
+    }
+
+    const db = await dbPromise;
+    try {
+        const result = await db.run('DELETE FROM Utilizadores WHERE id_utilizador = ?', id_utilizador);
+
+        if (result.changes > 0) {
+            console.log(`[BACKEND LOG] Utilizador ID: ${id_utilizador} eliminado com sucesso.`);
+            res.status(200).json({ message: 'Conta eliminada com sucesso.' });
+        } else {
+            // Este caso é raro, mas é uma salvaguarda
+            console.warn(`[BACKEND LOG] Tentativa de eliminar utilizador ID: ${id_utilizador}, mas não foi encontrado.`);
+            res.status(404).json({ message: 'Utilizador não encontrado.' });
+        }
+    } catch (error) {
+        console.error(`Erro ao eliminar conta do utilizador ID: ${id_utilizador}`, error);
+        res.status(500).json({ message: 'Erro interno ao tentar eliminar a conta.' });
+    }
+});
+
+
+// --- Rotas da API Coleção ---
+// ... (resto do ficheiro)
 
 // --- Rotas da API Coleção ---
 
@@ -381,75 +456,96 @@ app.get('/api/colecao', verificarToken, async (req, res) => {
 
 // Dentro do ficheiro Rate_It_Plus/rateitplus_backend/server.js
 
+// rateitplus_backend/server.js
+
+// rateitplus_backend/server.js
+
 app.get('/api/colecao/:id', verificarToken, async (req, res) => {
     const { id } = req.params;
     const id_utilizador_logado = req.utilizador.id_utilizador;
-    console.log(`[BACKEND LOG] Iniciando GET /api/colecao/${id} para utilizador ${id_utilizador_logado}`); // Log de início
 
     try {
         const db = await dbPromise;
-        console.log(`[BACKEND LOG] Obtendo item principal da DB para id: ${id}`); // Log antes da query principal
         const itemRow = await db.get('SELECT * FROM ItensMedia WHERE id = ? AND id_utilizador = ?', [id, id_utilizador_logado]);
         
         if (itemRow) {
-            console.log(`[BACKEND LOG] Item principal encontrado:`, itemRow); // Log se itemRow for encontrado
-
-            console.log(`[BACKEND LOG] Obtendo avaliações da DB para id_item: ${id}`);
-            const avaliacoesRows = await db.all('SELECT criterio, nota FROM Avaliacoes WHERE id_item = ?', id);
+            const avaliacoesRows = await db.all(`
+                SELECT C.nome_criterio, A.nota 
+                FROM Avaliacoes AS A
+                JOIN CriteriosUtilizador AS C ON A.id_criterio_utilizador = C.id_criterio_utilizador
+                WHERE A.id_item = ? AND C.id_utilizador = ?
+            `, [id, id_utilizador_logado]);
+            
             const classificacoes = {};
-            avaliacoesRows.forEach(row => { classificacoes[row.criterio] = row.nota; });
-            console.log(`[BACKEND LOG] Avaliações processadas:`, classificacoes);
+            avaliacoesRows.forEach(row => {
+                const key = row.nome_criterio.charAt(0).toLowerCase() + row.nome_criterio.slice(1).replace(/[^a-zA-Z0-9]/g, '');
+                classificacoes[key] = row.nota;
+            });
 
-            console.log(`[BACKEND LOG] Obtendo géneros da DB para id_item: ${id}`);
             const generosRows = await db.all('SELECT genero FROM GenerosItem WHERE id_item = ?', id);
             const generos = generosRows.map(row => row.genero);
-            console.log(`[BACKEND LOG] Géneros processados:`, generos);
             
-            console.log(`[BACKEND LOG] Obtendo relacionados da DB para id_item: ${id}`);
             const relacionadosRows = await db.all(`
                 SELECT CASE WHEN item1_id = ? THEN item2_id ELSE item1_id END as id_relacionado
                 FROM RelacionadosItem WHERE item1_id = ? OR item2_id = ?`, 
                 [id, id, id]
             );
             const relacionados = relacionadosRows.map(row => row.id_relacionado);
-            console.log(`[BACKEND LOG] Relacionados processados:`, relacionados);
 
-            const itemCompleto = { ...itemRow, classificacoes, generos, relacionados }; // Alterado de 'genero' para 'generos'
-            console.log(`[BACKEND LOG] Item completo montado. Enviando resposta.`);
+            // --- CORREÇÃO AQUI ---
+            // Combina o itemRow original com os dados extra e envia
+            const itemCompleto = { 
+                ...itemRow, 
+                classificacoes, 
+                generos, 
+                relacionados 
+            };
             res.json(itemCompleto);
+
         } else {
-            console.log(`[BACKEND LOG] Item com id: ${id} não encontrado para utilizador ${id_utilizador_logado}. Enviando 404.`);
             res.status(404).json({ message: 'Item não encontrado ou não pertence ao utilizador.' });
         }
 
-    } catch (error) { // Este catch irá apanhar erros das queries ou do processamento
-        console.error(`[BACKEND ERROR] Erro detalhado ao obter item ${id} (SQLite):`, error); // Log do erro completo no backend
+    } catch (error) {
+        console.error(`[BACKEND ERROR] Erro detalhado ao obter item ${id} (SQLite):`, error);
         res.status(500).json({ message: 'Erro ao obter dados do item.' });
     }
 });
 
+// ... (resto do ficheiro)
+
+// rateitplus_backend/server.js
+
 app.post('/api/colecao', verificarToken, async (req, res) => {
     const id_utilizador_logado = req.utilizador.id_utilizador;
-    // console.log(`POST /api/colecao - Utilizador ID: ${id_utilizador_logado}, req.body:`, JSON.stringify(req.body, null, 2)); // Log pode ser verboso
     const { 
         id, tmdb_id, nome, tipo, urlImagem, anoLancamento, trailerUrl, 
         idioma, sinopse, review, classificacoes, genero, relacionados 
     } = req.body;
 
-    // ADICIONE ESTE LOG:
-console.log(`[BACKEND POST /api/colecao] Géneros recebidos no req.body.genero:`, genero);
-
-
     if (!id || !nome || !classificacoes) { 
         return res.status(400).json({ message: 'Dados incompletos (id, nome, classificacoes são obrigatórios).' });
     }
-
-    const scoreFinalCalculado = calcularScoreFinalBackend(classificacoes);
-    const dataAtual = new Date().toISOString();
+    
     const db = await dbPromise;
 
     try {
+        const criteriosUtilizador = await db.all('SELECT id_criterio_utilizador, nome_criterio, peso FROM CriteriosUtilizador WHERE id_utilizador = ?', id_utilizador_logado);
+        let pesosParaCalculo = PESOS_PADRAO;
+
+        if (criteriosUtilizador && criteriosUtilizador.length > 0) {
+            pesosParaCalculo = criteriosUtilizador.reduce((obj, item) => {
+                const key = item.nome_criterio.charAt(0).toLowerCase() + item.nome_criterio.slice(1).replace(/[^a-zA-Z0-9]/g, '');
+                obj[key] = item.peso;
+                return obj;
+            }, {});
+        }
+
+        const scoreFinalCalculado = calcularScoreFinalBackend(classificacoes, pesosParaCalculo);
+        const dataAtual = new Date().toISOString();
+
         await db.run('BEGIN TRANSACTION');
+        
         const queryItem = `
             INSERT INTO ItensMedia
             (id, id_utilizador, tmdb_id, nome, tipo, url_imagem, ano_lancamento, trailer_url, idioma_original, sinopse, review_pessoal, score_final_calculado, data_ultima_modificacao, data_adicao)
@@ -461,12 +557,25 @@ console.log(`[BACKEND POST /api/colecao] Géneros recebidos no req.body.genero:`
         ]);
         
         if (classificacoes && typeof classificacoes === 'object') {
-            for (const [criterio, nota] of Object.entries(classificacoes)) {
+            // --- CORREÇÃO AQUI ---
+            // Cria um mapa com as chaves simplificadas (camelCase)
+            const criteriosDoUtilizadorMap = criteriosUtilizador.reduce((map, c) => {
+                const key = c.nome_criterio.charAt(0).toLowerCase() + c.nome_criterio.slice(1).replace(/[^a-zA-Z0-9]/g, '');
+                map[key] = c.id_criterio_utilizador;
+                return map;
+            }, {});
+            
+            for (const [criterioKey, nota] of Object.entries(classificacoes)) {
                 if (nota !== null && nota !== undefined && nota !== '') {
-                    await db.run('INSERT INTO Avaliacoes (id_item, criterio, nota) VALUES (?, ?, ?)', [id, criterio, parseFloat(nota)]);
+                    const id_criterio_utilizador = criteriosDoUtilizadorMap[criterioKey]; // Agora a correspondência funciona
+                    if (id_criterio_utilizador) {
+                        await db.run('INSERT INTO Avaliacoes (id_item, id_criterio_utilizador, nota) VALUES (?, ?, ?)', [id, id_criterio_utilizador, parseFloat(nota)]);
+                    }
                 }
             }
         }
+        
+        // ... (o resto da função permanece igual) ...
         if (genero && Array.isArray(genero)) {
             for (const g of genero) {
                 await db.run('INSERT INTO GenerosItem (id_item, genero) VALUES (?, ?)', [id, g]);
@@ -483,15 +592,8 @@ console.log(`[BACKEND POST /api/colecao] Géneros recebidos no req.body.genero:`
         }
         await db.run('COMMIT');
         
-        const itemAdicionadoParaResposta = { 
-            id_utilizador: id_utilizador_logado, id, tmdb_id, nome, tipo, 
-            url_imagem: urlImagem, ano_lancamento: anoLancamento, trailer_url: trailerUrl,
-            idioma_original: idioma, sinopse, review_pessoal: review,
-            score_final_calculado: scoreFinalCalculado, data_ultima_modificacao: dataAtual, 
-            data_adicao: new Date().toISOString(), 
-            classificacoes, genero, relacionados: relacionados || []
-        };
-        res.status(201).json({ message: 'Item adicionado com sucesso!', item: itemAdicionadoParaResposta });
+        const itemAdicionadoParaResposta = { /* ... */ }; // Resposta omitida para brevidade
+        res.status(201).json({ message: 'Item adicionado com sucesso!', item: {id, nome, score_final_calculado: scoreFinalCalculado} });
 
     } catch (error) { 
         console.error('Erro ao adicionar item completo (SQLite):', error);
@@ -500,12 +602,18 @@ console.log(`[BACKEND POST /api/colecao] Géneros recebidos no req.body.genero:`
      }
 });
 
+
+// rateitplus_backend/server.js
+
+// ... (código existente) ...
+
+// rateitplus_backend/server.js
+
 app.put('/api/colecao/:id', verificarToken, async (req, res) => {
     const { id: itemIdFromParams } = req.params;
     const id_utilizador_logado = req.utilizador.id_utilizador;
-    // console.log(`PUT /api/colecao/:id - ID do URL: ${itemIdFromParams}, Utilizador ID: ${id_utilizador_logado}`); // Log pode ser verboso
-    // console.log(`PUT /api/colecao/:id - req.body recebido:`, JSON.stringify(req.body, null, 2)); // Log pode ser verboso
     
+    // ... (verificações iniciais) ...
     const db = await dbPromise;
     const itemExistente = await db.get('SELECT id_utilizador FROM ItensMedia WHERE id = ?', itemIdFromParams);
     if (!itemExistente) {
@@ -520,22 +628,27 @@ app.put('/api/colecao/:id', verificarToken, async (req, res) => {
         idioma, sinopse, review, classificacoes, genero, relacionados 
     } = req.body;
 
-
-    console.log(`[BACKEND PUT /api/colecao/${itemIdFromParams}] Géneros recebidos no req.body.genero:`, genero);
-
-
-    if (itemIdFromParams !== idFromBody) { 
-        return res.status(400).json({ message: 'IDs do item no URL e no corpo não correspondem.'});
+    if (itemIdFromParams !== idFromBody || !nome || !classificacoes) { 
+        return res.status(400).json({ message: 'Dados inválidos ou em falta.'});
     }
-    if (!nome || !classificacoes) { 
-        return res.status(400).json({ message: 'Nome e classificações são obrigatórios para atualização.' });
-    }
-
-    const scoreFinalCalculado = calcularScoreFinalBackend(classificacoes);
-    const dataAtual = new Date().toISOString();
 
     try {
+        const criteriosUtilizador = await db.all('SELECT id_criterio_utilizador, nome_criterio, peso FROM CriteriosUtilizador WHERE id_utilizador = ?', id_utilizador_logado);
+        let pesosParaCalculo = PESOS_PADRAO;
+
+        if (criteriosUtilizador && criteriosUtilizador.length > 0) {
+            pesosParaCalculo = criteriosUtilizador.reduce((obj, item) => {
+                const key = item.nome_criterio.charAt(0).toLowerCase() + item.nome_criterio.slice(1).replace(/[^a-zA-Z0-9]/g, '');
+                obj[key] = item.peso;
+                return obj;
+            }, {});
+        }
+
+        const scoreFinalCalculado = calcularScoreFinalBackend(classificacoes, pesosParaCalculo);
+        const dataAtual = new Date().toISOString();
+
         await db.run('BEGIN TRANSACTION');
+        
         const queryItem = `
             UPDATE ItensMedia SET
                 tmdb_id = ?, nome = ?, tipo = ?, url_imagem = ?, ano_lancamento = ?,
@@ -543,51 +656,40 @@ app.put('/api/colecao/:id', verificarToken, async (req, res) => {
                 score_final_calculado = ?, data_ultima_modificacao = ?
             WHERE id = ? AND id_utilizador = ?; 
         `;
-        const updateResult = await db.run(queryItem, [
+        await db.run(queryItem, [
             tmdb_id, nome, tipo, urlImagem, anoLancamento, trailerUrl, idioma, sinopse, review,
             scoreFinalCalculado, dataAtual, itemIdFromParams, id_utilizador_logado
         ]);
-
-        if (updateResult.changes === 0 && itemExistente) { // Se o item existia mas não foi alterado (ou não pertence ao user - já verificado)
-             // Não necessariamente um erro se os dados forem idênticos, mas o id_utilizador já foi verificado
-            console.warn(`PUT /api/colecao/:id - Nenhum registo atualizado em ItensMedia para ID: ${itemIdFromParams}. Os dados podem ser idênticos.`);
-        }
         
         await db.run('DELETE FROM Avaliacoes WHERE id_item = ?', itemIdFromParams);
-        if (classificacoes && typeof classificacoes === 'object') { 
-            for (const [criterio, nota] of Object.entries(classificacoes)) {
+        if (classificacoes && typeof classificacoes === 'object') {
+            // A CORREÇÃO É IDÊNTICA À DA ROTA POST
+            const criteriosDoUtilizadorMap = criteriosUtilizador.reduce((map, c) => {
+                const key = c.nome_criterio.charAt(0).toLowerCase() + c.nome_criterio.slice(1).replace(/[^a-zA-Z0-9]/g, '');
+                map[key] = c.id_criterio_utilizador;
+                return map;
+            }, {});
+
+            for (const [criterioKey, nota] of Object.entries(classificacoes)) {
                 if (nota !== null && nota !== undefined && nota !== '') {
-                    await db.run('INSERT INTO Avaliacoes (id_item, criterio, nota) VALUES (?, ?, ?)', [itemIdFromParams, criterio, parseFloat(nota)]);
+                    const id_criterio_utilizador = criteriosDoUtilizadorMap[criterioKey];
+                    if (id_criterio_utilizador) {
+                         await db.run('INSERT INTO Avaliacoes (id_item, id_criterio_utilizador, nota) VALUES (?, ?, ?)', [itemIdFromParams, id_criterio_utilizador, parseFloat(nota)]);
+                    }
                 }
             }
         }
+        
+        // ... (o resto da função permanece igual) ...
         await db.run('DELETE FROM GenerosItem WHERE id_item = ?', itemIdFromParams);
-        if (genero && Array.isArray(genero)) { 
-            for (const g of genero) {
-                await db.run('INSERT INTO GenerosItem (id_item, genero) VALUES (?, ?)', [itemIdFromParams, g]);
-            }
-         }
+        if (genero && Array.isArray(genero)) { /* ... */ }
         await db.run('DELETE FROM RelacionadosItem WHERE item1_id = ? OR item2_id = ?', [itemIdFromParams, itemIdFromParams]);
-        if (relacionados && Array.isArray(relacionados)) { 
-            for (const relacionadoId of relacionados) {
-                if (itemIdFromParams === relacionadoId) continue;
-                const [item1_id, item2_id] = [itemIdFromParams, relacionadoId].sort();
-                try {
-                    await db.run('INSERT INTO RelacionadosItem (item1_id, item2_id) VALUES (?, ?)', [item1_id, item2_id]);
-                } catch (e) { if (e.code !== 'SQLITE_CONSTRAINT') throw e; }
-            }
-        }
+        if (relacionados && Array.isArray(relacionados)) { /* ... */ }
 
         await db.run('COMMIT');
         
-        const itemAtualizadoParaResposta = {
-            id_utilizador: id_utilizador_logado, id: itemIdFromParams, tmdb_id, nome, tipo, 
-            url_imagem: urlImagem, ano_lancamento: anoLancamento, trailer_url: trailerUrl,
-            idioma_original: idioma, sinopse, review_pessoal: review,
-            score_final_calculado: scoreFinalCalculado, data_ultima_modificacao: dataAtual,
-            classificacoes, genero, relacionados: relacionados || []
-        };
-        res.json({ message: 'Item atualizado com sucesso!', item: itemAtualizadoParaResposta });
+        const itemAtualizadoParaResposta = { /* ... */ }; // Resposta omitida para brevidade
+        res.json({ message: 'Item atualizado com sucesso!', item: {id: itemIdFromParams, nome, score_final_calculado: scoreFinalCalculado} });
 
     } catch (error) { 
         console.error(`Erro ao atualizar item ${itemIdFromParams} (SQLite):`, error);
@@ -595,6 +697,7 @@ app.put('/api/colecao/:id', verificarToken, async (req, res) => {
         res.status(500).json({ message: `Erro ao atualizar item: ${error.message}` });
      }
 });
+// ... (resto do ficheiro)
 
 app.delete('/api/colecao/:id', verificarToken, async (req, res) => {
     const { id } = req.params;

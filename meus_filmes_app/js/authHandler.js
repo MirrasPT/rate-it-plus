@@ -51,6 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
         errorMessageDiv.style.display = 'block';
     }
 
+ // meus_filmes_app/js/authHandler.js
+
     authForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         errorMessageDiv.style.display = 'none'; // Limpa erros anteriores
@@ -89,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Erro ao tentar fazer login:', error);
                 displayError('Erro de ligação ao servidor. Tenta novamente mais tarde.');
             }
-        } else {
+        } else { // <-- CHAVETA DE FECHO ADICIONADA AQUI
             // --- Lógica de Registo ---
             const confirmar_palavra_passe = confirmPasswordInput.value;
             if (palavra_passe !== confirmar_palavra_passe) {
@@ -98,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 authButton.textContent = 'Registar';
                 return;
             }
-            if (palavra_passe.length < 6) { // Exemplo de validação de password
+            if (palavra_passe.length < 6) {
                 displayError('A palavra-passe deve ter pelo menos 6 caracteres.');
                 authButton.disabled = false;
                 authButton.textContent = 'Registar';
@@ -106,37 +108,53 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const response = await fetch(`${BACKEND_AUTH_URL}/registo`, {
+                // PASSO 1: Tenta registar o utilizador
+                const registoResponse = await fetch(`${BACKEND_AUTH_URL}/registo`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nome_utilizador, palavra_passe })
                 });
 
-                const data = await response.json();
+                const registoData = await registoResponse.json();
 
-                if (response.status === 201) { // 201 Created
-                    // Registo bem-sucedido
-                    console.log('Registo bem-sucedido:', data);
-                    alert('Registo efetuado com sucesso! Por favor, faz login.');
-                    setAuthMode(true); // Volta para o modo de login
-                    usernameInput.value = nome_utilizador; // Preenche o username para facilitar o login
-                    passwordInput.value = '';
-                    confirmPasswordInput.value = '';
-                } else {
-                    // Erro de registo
-                    displayError(data.message || 'Falha no registo. Tenta novamente.');
+                if (!registoResponse.ok) { // Se o registo falhar (ex: user já existe)
+                    throw new Error(registoData.message || 'Falha no registo.');
                 }
+
+                // PASSO 2: Se o registo for bem sucedido, tenta fazer login automaticamente
+                console.log('Registo bem-sucedido. A tentar fazer login automático...');
+                const loginResponse = await fetch(`${BACKEND_AUTH_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome_utilizador, palavra_passe })
+                });
+
+                const loginData = await loginResponse.json();
+
+                if (!loginResponse.ok) {
+                    // Isto não deveria acontecer, mas é uma salvaguarda
+                    throw new Error(loginData.message || 'Erro ao fazer login após o registo.');
+                }
+                
+                // PASSO 3: Login bem sucedido, guardar dados e redirecionar
+                console.log('Login automático bem-sucedido:', loginData);
+                localStorage.setItem('accessToken', loginData.accessToken);
+                localStorage.setItem('nomeUtilizador', loginData.nome_utilizador);
+                localStorage.setItem('idUtilizador', loginData.id_utilizador);
+                
+                // Redireciona para a nova página de configuração de critérios
+                alert('Conta criada com sucesso! Vamos agora configurar os teus critérios de avaliação.');
+                window.location.href = 'registo.html'; // Usaremos esta página temporariamente para os critérios
+
             } catch (error) {
-                console.error('Erro ao tentar registar:', error);
-                displayError('Erro de ligação ao servidor. Tenta novamente mais tarde.');
+                console.error('Erro no processo de registo e login:', error);
+                displayError(error.message);
             }
         }
+        
         authButton.disabled = false;
         authButton.textContent = isLoginMode ? 'Entrar' : 'Registar';
     });
-
     // Define o modo inicial (Login)
     setAuthMode(true);
 });

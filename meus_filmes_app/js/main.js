@@ -1,11 +1,97 @@
+
 // meus_filmes_app/js/main.js
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // --- Referências aos Elementos do DOM ---
   const btnAdicionarNovo = document.getElementById('btnAdicionarNovo');
-  // const btnCarregarJson = document.getElementById('btnCarregarJson');         // Comentado ou Removido
-  // const jsonUploadInput = document.getElementById('jsonUpload');             // Comentado ou Removido
-  // const btnDescarregarJson = document.getElementById('btnDescarregarJson');   // Comentado ou Removido
   const tabButtons = document.querySelectorAll('.tab-button');
+
+  // NOVO: Elementos do menu do utilizador
+  const welcomeMessageEl = document.getElementById('welcomeMessage');
+  const btnLogout = document.getElementById('btnLogout');
+  const btnDeleteAccount = document.getElementById('btnDeleteAccount'); // Para o próximo passo
+
+  // --- LÓGICA DE GESTÃO DO UTILIZADOR ---
+
+  // Verifica se o utilizador está logado
+  const nomeUtilizador = localStorage.getItem('nomeUtilizador');
+  if (!nomeUtilizador) {
+    // Se não houver nome de utilizador, redireciona para a página de autenticação
+    alert("Por favor, faz login para aceder à tua coleção.");
+    window.location.href = 'auth.html';
+    return; // Pára a execução do resto do script
+  }
+
+  // Mostra a mensagem de boas-vindas
+  if (welcomeMessageEl) {
+    welcomeMessageEl.textContent = `Olá, ${nomeUtilizador}!`;
+  }
+
+  // Adiciona a funcionalidade de Logout
+  if (btnLogout) {
+    btnLogout.addEventListener('click', () => {
+      // Limpa todos os dados do utilizador guardados localmente
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('nomeUtilizador');
+      localStorage.removeItem('idUtilizador');
+      
+      // Redireciona para a página de login
+      alert("Sessão terminada.");
+      window.location.href = 'auth.html';
+    });
+  }
+
+
+  // meus_filmes_app/js/main.js
+
+// ... (logo a seguir ao listener do btnLogout)
+
+  // Adiciona a funcionalidade de Eliminar Conta
+  if (btnDeleteAccount) {
+    btnDeleteAccount.addEventListener('click', async () => {
+      // Pede uma dupla confirmação para uma ação tão destrutiva
+      const confirm1 = confirm("Tem a certeza ABSOLUTA que quer eliminar a sua conta? Todos os seus dados (coleção, critérios, etc.) serão perdidos para sempre. Esta ação não pode ser desfeita.");
+      if (!confirm1) {
+        return; // Utilizador cancelou
+      }
+
+      const confirm2 = prompt("Para confirmar, por favor escreva o seu nome de utilizador: '" + nomeUtilizador + "'");
+      if (confirm2 !== nomeUtilizador) {
+        alert("O nome de utilizador não corresponde. A eliminação foi cancelada.");
+        return;
+      }
+
+      // Se ambas as confirmações passarem, procede com a eliminação
+      try {
+        const token = localStorage.getItem('accessToken');
+        const response = await fetch(`${BACKEND_URL}/utilizador`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert("A sua conta foi eliminada com sucesso.");
+          // Limpa o localStorage e redireciona, tal como no logout
+          localStorage.clear(); // Limpa tudo
+          window.location.href = 'auth.html';
+        } else {
+          throw new Error(data.message || 'Ocorreu um erro ao tentar eliminar a conta.');
+        }
+
+      } catch (error) {
+        console.error('Erro ao eliminar conta:', error);
+        alert(`Erro: ${error.message}`);
+      }
+    });
+  }
+
+
+  // --- LÓGICA EXISTENTE DA PÁGINA ---
+// ... (resto do ficheiro)
 
   // Navegação para adicionar novo item
   if (btnAdicionarNovo) {
@@ -14,50 +100,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Carregar coleção (JSON) - Bloco a ser removido ou comentado
-  /*
-  if (btnCarregarJson && jsonUploadInput) {
-    btnCarregarJson.addEventListener('click', () => jsonUploadInput.click());
-    jsonUploadInput.addEventListener('change', async event => {
-      const file = event.target.files[0];
-      if (file) {
-        try {
-          alert('A importação de JSON para o backend ainda não está implementada.');
-        } catch (e) {
-          alert(`Erro ao processar ficheiro JSON: ${e.message}`);
-        }
-        event.target.value = null;
-      }
-    });
-  }
-  */
-
-  // Descarregar coleção para arquivo - Bloco a ser removido ou comentado
-  /*
-  if (btnDescarregarJson) {
-    btnDescarregarJson.addEventListener('click', () => {
-      alert('O descarregamento de JSON a partir do backend ainda não está implementado.');
-    });
-  }
-  */
-
-
   // Filtro por abas (tabs)
   let currentFilter = 'all';
   tabButtons.forEach(btn => {
-    btn.addEventListener('click', async () => { // async aqui também
+    btn.addEventListener('click', async () => {
       tabButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentFilter = btn.dataset.filter;
-      await renderAll(); // Re-renderiza com o novo filtro
+      await renderAll();
     });
   });
 
-  // Re-render de Top5 e Grid (agora assíncrono)
+  // Re-render de Top5 e Grid
   async function renderAll() {
-    // Mostrar um indicador de loading, se desejado
     const top5Container = document.querySelector('.top5-cards');
-    const gridContainer = document.getElementById('colecaoGrid'); // definido em uiUtils.js, mas podemos pegar aqui também
+    const gridContainer = document.getElementById('colecaoGrid');
     
     if(top5Container) top5Container.innerHTML = '<p>A carregar Top 5...</p>';
     if(gridContainer) gridContainer.innerHTML = '<p>A carregar coleção...</p>';
@@ -72,26 +129,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Renderiza Top 5 conforme filtro atual (agora assíncrono)
+  // Renderiza Top 5
   async function renderTop5() {
     const top5Container = document.querySelector('.top5-cards');
     if (!top5Container) return;
-    top5Container.innerHTML = ''; // Limpa antes de popular
+    top5Container.innerHTML = '';
 
-    let items = await obterColecaoCompleta(); // Chama a função assíncrona de dataManager.js
-    
-    // Ordena os itens. Certifica-te que scoreFinal é um número.
+    let items = await obterColecaoCompleta();
     items = items.sort((a, b) => parseFloat(b.scoreFinal) - parseFloat(a.scoreFinal));
 
     if (currentFilter !== 'all') {
       items = items.filter(i => i.tipo === currentFilter);
     }
 
-    if (items.length === 0 && currentFilter !== 'all') {
-        top5Container.innerHTML = `<p>Nenhum item do tipo "${currentFilter}" no Top 5.</p>`;
-        return;
-    } else if (items.length === 0) {
-        top5Container.innerHTML = `<p>A tua coleção está vazia ou não foi possível carregar o Top 5.</p>`;
+    if (items.length === 0) {
+        top5Container.innerHTML = `<p>A tua coleção está vazia.</p>`;
         return;
     }
     
@@ -110,34 +162,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         <p class="sinopse">${item.sinopse || 'Sem sinopse disponível.'}</p>
       `;
       card.addEventListener('click', () => {
-        window.location.href = `detalhes.html?id=${item.id}`; //
+        window.location.href = `detalhes.html?id=${item.id}`;
       });
       top5Container.appendChild(card);
     });
   }
 
-  // Renderiza o restante da coleção, mostrando rank e excluindo os Top 5 (agora assíncrono)
+  // Renderiza o restante da coleção
   async function renderGrid() {
-    let items = await obterColecaoCompleta(); // Chama a função assíncrona de dataManager.js
-
-    // Ordena os itens. Certifica-te que scoreFinal é um número.
+    let items = await obterColecaoCompleta();
     items = items.sort((a, b) => parseFloat(b.scoreFinal) - parseFloat(a.scoreFinal));
 
     if (currentFilter !== 'all') {
       items = items.filter(i => i.tipo === currentFilter);
     }
     
-    // Obtém os IDs dos itens que já estão no Top 5 (baseado no filtro atual)
     const top5Ids = items.slice(0, 5).map(item => item.id);
-    // Filtra os itens da grelha para não incluir os que já estão no Top 5
     const gridItems = items.filter(item => !top5Ids.includes(item.id));
 
-    // A função exibirColecaoNaGrid já está em uiUtils.js
-    // Ela espera `items` e `startRank`.
-    // O `startRank` será 6, pois os 5 primeiros já estão no Top 5.
-    exibirColecaoNaGrid(gridItems, 6, 'colecaoGrid'); //
+    exibirColecaoNaGrid(gridItems, 6, 'colecaoGrid');
   }
 
-  // Inicialização ao carregar página (agora assíncrona)
+  // Inicialização ao carregar página
   await renderAll();
 });

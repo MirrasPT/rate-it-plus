@@ -1,103 +1,28 @@
 // meus_filmes_app/js/registoHandler.js
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // --- Referências aos Elementos do DOM ---
-    const form = document.getElementById('registoForm');
-    const formTitle = document.getElementById('registo-title');
+    const form = document.getElementById('criteriosForm');
     const errorMessageDiv = document.getElementById('errorMessage');
-
-    // Referências aos 4 passos do formulário
-    const step1 = document.getElementById('step1-dados-utilizador');
-    const step2 = document.getElementById('step2-selecionar-criterios');
-    const step3 = document.getElementById('step3-ajustar-pesos');
-    const step4 = document.getElementById('step4-primeiro-filme');
-    const allSteps = [step1, step2, step3, step4];
-
-    // Campos do Passo 1
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-    const confirmPasswordInput = document.getElementById('confirmPassword');
-
-    // Elementos do Passo 2
     const criteriosCheckboxContainer = document.getElementById('criterios-checkbox-lista');
     const novoCriterioInput = document.getElementById('novoCriterioNome');
     const btnAdicionarCriterio = document.getElementById('btnAdicionarCriterio');
-
-    // Elemento do Passo 3
     const pesosSlidersContainer = document.getElementById('pesos-sliders-lista');
+    const btnSalvarCriterios = document.getElementById('btnSalvarCriterios');
 
-    // Botões de Navegação
-    const btnAnterior = document.getElementById('btnAnterior');
-    const btnProximo = document.getElementById('btnProximo');
-    const btnFinalizar = document.getElementById('btnFinalizar');
-
-    // --- Estado do Formulário ---
-    let currentStep = 1;
-    let criteriosCarregados = false;
-
-    // --- Funções de Navegação e Validação ---
-
-    async function navigateToStep(stepNumber) {
-        // --- LÓGICA DE TRANSIÇÃO (ANTES DE NAVEGAR) ---
-        if (stepNumber === 2 && !criteriosCarregados) {
-            await fetchAndRenderCriteriaSelection();
-            criteriosCarregados = true;
-        }
-        if (stepNumber === 3) {
-            renderWeightSliders();
-        }
-
-        currentStep = stepNumber;
-        
-        // Mostra o passo correto e esconde os outros
-        allSteps.forEach((step, index) => {
-            step.classList.toggle('active', (index + 1) === currentStep);
-        });
-
-        formTitle.textContent = `Cria a tua Conta (Passo ${currentStep} de 4)`;
-        
-        // Atualiza a visibilidade dos botões de navegação
-        btnAnterior.style.visibility = currentStep > 1 ? 'visible' : 'hidden';
-        btnProximo.style.display = currentStep < allSteps.length ? 'inline-block' : 'none';
-        btnFinalizar.style.display = currentStep === allSteps.length ? 'inline-block' : 'none';
-        
-        errorMessageDiv.style.display = 'none';
-    }
+    // --- Funções ---
 
     function displayError(message) {
         errorMessageDiv.textContent = message;
         errorMessageDiv.style.display = 'block';
     }
 
-    function validateStep1() {
-        if (!usernameInput.value.trim() || !passwordInput.value || !confirmPasswordInput.value) {
-            displayError('Por favor, preencha todos os campos.');
-            return false;
-        }
-        if (passwordInput.value.length < 6) {
-            displayError('A palavra-passe deve ter pelo menos 6 caracteres.');
-            return false;
-        }
-        if (passwordInput.value !== confirmPasswordInput.value) {
-            displayError('As palavras-passe não coincidem.');
-            return false;
-        }
-        return true;
-    }
-    
-    function validateStep2() {
-        const anyChecked = criteriosCheckboxContainer.querySelector('input[type="checkbox"]:checked');
-        if (!anyChecked) {
-            displayError('Por favor, seleciona pelo menos um critério.');
-            return false;
-        }
-        return true;
-    }
-
-    // --- Funções de Renderização dos Passos 2 e 3 ---
-
-    async function fetchAndRenderCriteriaSelection() {
-        criteriosCheckboxContainer.innerHTML = '<p>A carregar critérios...</p>';
+    /**
+     * Vai buscar os critérios padrão à API e renderiza-os como checkboxes.
+     * Também chama a função para renderizar os sliders de peso.
+     */
+    async function fetchAndRenderCriteria() {
+        criteriosCheckboxContainer.innerHTML = '<p>A carregar...</p>';
         try {
             const response = await fetch('http://localhost:3000/api/criterios-padrao');
             if (!response.ok) throw new Error('Falha ao carregar critérios.');
@@ -106,12 +31,17 @@ document.addEventListener('DOMContentLoaded', () => {
             criteriosCheckboxContainer.innerHTML = '';
             criterios.forEach(criterio => renderCheckboxItem(criterio.nome_criterio, true)); // Pré-selecionados por defeito
         
+            renderWeightSliders(); // Renderiza os sliders assim que os critérios são carregados
+
         } catch (error) {
             console.error(error);
             criteriosCheckboxContainer.innerHTML = `<p style="color: red;">${error.message}</p>`;
         }
     }
 
+    /**
+     * Renderiza um único critério como uma checkbox.
+     */
     function renderCheckboxItem(nome, isChecked = false) {
         const uniqueId = 'crit_' + nome.replace(/[^a-zA-Z0-9]/g, '');
         const div = document.createElement('div');
@@ -121,8 +51,15 @@ document.addEventListener('DOMContentLoaded', () => {
             <label for="${uniqueId}">${nome}</label>
         `;
         criteriosCheckboxContainer.appendChild(div);
+
+        // Adiciona um listener para atualizar os sliders sempre que uma checkbox muda
+        const checkbox = div.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener('change', renderWeightSliders);
     }
 
+    /**
+     * Renderiza os sliders de peso com base nos critérios selecionados.
+     */
     function renderWeightSliders() {
         pesosSlidersContainer.innerHTML = ''; // Limpa antes de renderizar
         const checkedCriterios = criteriosCheckboxContainer.querySelectorAll('input[type="checkbox"]:checked');
@@ -139,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="slider-value">5.0</span>
             `;
 
-            // Adiciona um event listener para atualizar o valor do span em tempo real
             const slider = div.querySelector('input[type="range"]');
             const valueSpan = div.querySelector('.slider-value');
             slider.addEventListener('input', () => {
@@ -152,28 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners ---
 
-    btnProximo.addEventListener('click', async () => {
-        let isValid = false;
-        if (currentStep === 1) {
-            isValid = validateStep1();
-        } else if (currentStep === 2) {
-            isValid = validateStep2();
-        } else if (currentStep === 3) {
-            // A validação do passo 3 (pesos) não é estritamente necessária, pois têm valores padrão.
-            isValid = true;
-        }
-
-        if (isValid && currentStep < allSteps.length) {
-            await navigateToStep(currentStep + 1);
-        }
-    });
-
-    btnAnterior.addEventListener('click', () => {
-        if (currentStep > 1) {
-            navigateToStep(currentStep - 1);
-        }
-    });
-
     btnAdicionarCriterio.addEventListener('click', () => {
         const nomeNovoCriterio = novoCriterioInput.value.trim();
         if (nomeNovoCriterio) {
@@ -183,22 +97,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             renderCheckboxItem(nomeNovoCriterio, true); // Adiciona e marca como selecionado
+            renderWeightSliders(); // Atualiza os sliders
             novoCriterioInput.value = '';
         }
     });
     
-    // --- Submissão Final do Formulário ---
+    /**
+     * Submissão do formulário para guardar os critérios personalizados do utilizador.
+     */
     form.addEventListener('submit', async (event) => {
-        event.preventDefault(); // Impede o envio padrão do formulário
+        event.preventDefault();
+
+        const anyChecked = criteriosCheckboxContainer.querySelector('input[type="checkbox"]:checked');
+        if (!anyChecked) {
+            displayError('Por favor, seleciona pelo menos um critério.');
+            return;
+        }
         
-        btnFinalizar.disabled = true;
-        btnFinalizar.textContent = 'A criar conta...';
+        btnSalvarCriterios.disabled = true;
+        btnSalvarCriterios.textContent = 'A guardar...';
 
-        // 1. Obter os dados do utilizador do Passo 1
-        const nome_utilizador = usernameInput.value;
-        const palavra_passe = passwordInput.value;
-
-        // 2. Obter os critérios e pesos do Passo 3
         const criteriosParaEnviar = [];
         const sliders = pesosSlidersContainer.querySelectorAll('.criterio-peso-slider');
         sliders.forEach(slider => {
@@ -208,36 +126,41 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // 3. Enviar os dados para o backend
+        // Envia os dados para o novo endpoint
         try {
-            const response = await fetch('http://localhost:3000/api/auth/registo-completo', {
+            const token = localStorage.getItem('accessToken');
+            const response = await fetch('http://localhost:3000/api/criterios', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    nome_utilizador,
-                    palavra_passe,
-                    criterios: criteriosParaEnviar
-                })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` // Envia o token de autenticação
+                },
+                body: JSON.stringify({ criterios: criteriosParaEnviar })
             });
 
             const data = await response.json();
-
             if (!response.ok) {
-                throw new Error(data.message || 'Ocorreu um erro desconhecido.');
+                throw new Error(data.message || 'Ocorreu um erro.');
             }
 
             // Sucesso!
-            alert('Conta criada com sucesso! Por favor, faz login para continuar.');
-            window.location.href = 'auth.html'; // Redireciona para a página de login
+            alert('Critérios guardados com sucesso!');
+            window.location.href = 'index.html'; // Redireciona para a página principal
 
         } catch (error) {
             displayError(error.message);
-            btnFinalizar.disabled = false;
-            btnFinalizar.textContent = 'Criar Conta';
+            btnSalvarCriterios.disabled = false;
+            btnSalvarCriterios.textContent = 'Guardar e Continuar';
         }
     });
 
-
     // --- Inicialização ---
-    navigateToStep(1);
+    // Verifica se o utilizador está autenticado antes de carregar
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+        alert("Sessão inválida. Por favor, faz login.");
+        window.location.href = 'auth.html';
+    } else {
+        fetchAndRenderCriteria();
+    }
 });

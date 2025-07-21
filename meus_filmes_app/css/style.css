@@ -1341,3 +1341,36 @@ footer {
     padding-bottom: 0.3rem;
     border-bottom: 1px solid var(--accent);
 }
+
+/* meus_filmes_app/css/style.css */
+
+/* ... (no final do ficheiro) ... */
+
+/* --- Estilos do Menu do Utilizador --- */
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-left: 1.5rem; /* Adiciona espaço à esquerda */
+}
+
+.welcome-message {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.btn-danger {
+    background: var(--accent2); /* Cor de perigo */
+    color: #fff;
+    border: 1px solid transparent;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background var(--transition), transform var(--transition);
+}
+
+.btn-danger:hover {
+    background: #ff1744; /* Um vermelho mais forte no hover */
+    transform: translateY(-2px);
+}
